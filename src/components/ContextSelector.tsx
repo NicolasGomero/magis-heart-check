@@ -117,7 +117,7 @@ export function ContextSelector({ onGenerate }: ContextSelectorProps) {
             </p>
           </div>
           
-          <div className="bg-card rounded-xl mx-4 overflow-hidden card-elevated">
+          <div className="bg-card rounded-xl mx-4 overflow-hidden card-elevated mb-6">
             {activities.map((activity, index) => (
               <button
                 key={activity.id}
