@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChevronRight, Plus } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { IOSHeader } from "@/components/IOSHeader";
 import { getSins } from "@/lib/sins.storage";
 import { TERM_LABELS, GRAVITY_LABELS, type Term, type Gravity } from "@/lib/sins.types";
 import { cn } from "@/lib/utils";
+
 function getTermBadgeColor(term: Term): string {
   switch (term) {
     case 'contra_dios': return 'bg-state-growth/20 text-state-growth';
@@ -23,13 +24,23 @@ function getGravityBadgeColor(gravity: Gravity): string {
 }
 
 export function SinsPage() {
-  const location = useLocation();
-  const [sins, setSins] = useState(() => getSins());
+  const [sins, setSins] = useState<ReturnType<typeof getSins>>([]);
   
-  // Refresh sins list when navigating back to this page
-  useEffect(() => {
+  const refreshSins = useCallback(() => {
     setSins(getSins());
-  }, [location.key]);
+  }, []);
+  
+  // Refresh sins on mount and when sins are updated
+  useEffect(() => {
+    refreshSins();
+    
+    const handleSinsUpdated = () => refreshSins();
+    window.addEventListener('sins-updated', handleSinsUpdated);
+    
+    return () => {
+      window.removeEventListener('sins-updated', handleSinsUpdated);
+    };
+  }, [refreshSins]);
   
   return (
     <div className="min-h-screen bg-background">
