@@ -12,19 +12,13 @@ const STORAGE_KEY = 'magis_sins';
 export function getSins(): Sin[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    console.log('[sins.storage] getSins raw:', stored?.substring(0, 100));
     if (stored) {
       const parsed = JSON.parse(stored);
-      console.log('[sins.storage] getSins parsed count:', parsed.length);
-      return parsed;
+      return Array.isArray(parsed) ? parsed : [];
     }
   } catch (e) {
     console.error('Error reading sins:', e);
   }
-  
-  // Initialize with empty array (no default sins for now)
-  console.log('[sins.storage] getSins: no data, returning empty');
-  saveSins([]);
   return [];
 }
 
