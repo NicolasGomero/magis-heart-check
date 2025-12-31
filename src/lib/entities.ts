@@ -23,6 +23,7 @@ const DEFAULT_PERSON_TYPES: PersonType[] = [
   { id: 'pt-6', name: '🤝 Amigos', isDefault: true },
   { id: 'pt-7', name: '👋 Conocidos', isDefault: true },
   { id: 'pt-8', name: '👤 Desconocidos', isDefault: true },
+  { id: 'pt-9', name: '💼 Compañeros de trabajo', isDefault: true },
 ];
 
 const DEFAULT_ACTIVITIES: Activity[] = [
