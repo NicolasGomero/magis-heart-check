@@ -2,6 +2,7 @@
 // Offline-first with localStorage persistence
 
 import type { PersonType, Activity } from './types';
+export type { PersonType, Activity };
 import { generateId } from './storage';
 
 // ========== Storage Keys ==========

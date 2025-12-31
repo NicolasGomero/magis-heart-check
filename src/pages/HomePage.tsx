@@ -11,10 +11,16 @@ import {
   getExamState,
   type ExamState 
 } from "@/lib/storage";
-import type { Context } from "@/lib/questions";
+import { getSins } from "@/lib/sins.storage";
 import { cn } from "@/lib/utils";
 
 type Screen = 'home' | 'examination';
+
+interface ExamContext {
+  personTypes: string[];
+  activities: string[];
+  sinsToShow: string[];
+}
 
 function StateIndicator({ state, timeAgo }: { state: ExamState; timeAgo: string }) {
   const stateConfig = {
@@ -57,7 +63,7 @@ function StateIndicator({ state, timeAgo }: { state: ExamState; timeAgo: string 
 
 export function HomePage() {
   const [screen, setScreen] = useState<Screen>('home');
-  const [selectedContext, setSelectedContext] = useState<Context | null>(null);
+  const [examContext, setExamContext] = useState<ExamContext | null>(null);
   const [userState, setUserState] = useState(getUserState);
   
   // Refresh state periodically
@@ -73,26 +79,62 @@ export function HomePage() {
   const examState = getExamState(minutesSinceLastExam);
   const timeAgo = formatTimeAgo(minutesSinceLastExam);
   
-  const handleContextSelect = (context: Context) => {
-    setSelectedContext(context);
+  const handleGenerate = (personTypes: string[], activities: string[]) => {
+    const allSins = getSins();
+    
+    let sinsToShow: string[];
+    
+    if (personTypes.length === 0 && activities.length === 0) {
+      // No selection = show all sins
+      sinsToShow = allSins.map(s => s.id);
+    } else {
+      // Union (OR) of sins matching any selected personType OR any selected activity
+      const sinIdsSet = new Set<string>();
+      
+      allSins.forEach(sin => {
+        // Check if sin is associated with any selected personType
+        const matchesPersonType = personTypes.some(pt => 
+          sin.involvedPersonTypes.includes(pt)
+        );
+        
+        // Check if sin is associated with any selected activity
+        const matchesActivity = activities.some(act => 
+          sin.associatedActivities.includes(act)
+        );
+        
+        if (matchesPersonType || matchesActivity) {
+          sinIdsSet.add(sin.id);
+        }
+      });
+      
+      sinsToShow = Array.from(sinIdsSet);
+    }
+    
+    setExamContext({
+      personTypes,
+      activities,
+      sinsToShow
+    });
     setScreen('examination');
   };
   
   const handleBack = () => {
     setScreen('home');
-    setSelectedContext(null);
+    setExamContext(null);
   };
   
   const handleComplete = () => {
     setScreen('home');
-    setSelectedContext(null);
+    setExamContext(null);
     setUserState(getUserState()); // Refresh state
   };
   
-  if (screen === 'examination' && selectedContext) {
+  if (screen === 'examination' && examContext) {
     return (
       <ExaminationFlow
-        context={selectedContext}
+        personTypes={examContext.personTypes}
+        activities={examContext.activities}
+        sinsToShow={examContext.sinsToShow}
         onBack={handleBack}
         onComplete={handleComplete}
       />
@@ -113,15 +155,15 @@ export function HomePage() {
         }
       />
       
-      <div className="flex-1 py-6 space-y-6">
+      <div className="flex-1 py-6 space-y-4 overflow-auto">
         {/* State indicator */}
         <div className="animate-fade-in">
           <StateIndicator state={examState} timeAgo={timeAgo} />
         </div>
         
-        {/* Context selector */}
+        {/* Context selector with multi-selection */}
         <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-          <ContextSelector onSelect={handleContextSelect} />
+          <ContextSelector onGenerate={handleGenerate} />
         </div>
         
         {/* Subtle count - only if there have been examinations today */}
@@ -133,13 +175,6 @@ export function HomePage() {
           </div>
         )}
       </div>
-      
-      {/* Footer quote */}
-      <footer className="px-6 py-4 text-center pb-24">
-        <p className="text-ios-caption text-muted-foreground/70 italic">
-          "En todo amar y servir"
-        </p>
-      </footer>
     </div>
   );
 }
