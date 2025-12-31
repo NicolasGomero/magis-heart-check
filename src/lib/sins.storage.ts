@@ -31,6 +31,8 @@ export function getSins(): Sin[] {
 function saveSins(sins: Sin[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sins));
+    // Dispatch custom event to notify listeners
+    window.dispatchEvent(new CustomEvent('sins-updated'));
   } catch (e) {
     console.error('Error saving sins:', e);
   }
