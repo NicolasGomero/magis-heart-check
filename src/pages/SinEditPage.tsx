@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Plus, Trash2 } from "lucide-react";
 import { IOSHeader } from "@/components/IOSHeader";
-import { getSin, createSin, updateSin, deleteSin } from "@/lib/sins.storage";
+import { getSin, createSin, updateSin, deleteSin, getSins } from "@/lib/sins.storage";
+import { toast } from "sonner";
 import { getPersonTypes, getActivities } from "@/lib/entities";
 import {
   createDefaultSin,
@@ -153,13 +154,26 @@ export function SinEditPage() {
   };
   
   const handleSave = () => {
-    if (!sin.name.trim()) return;
+    if (!sin.name.trim()) {
+      toast.error("El nombre es requerido");
+      return;
+    }
+    
+    console.log('[SinEditPage] handleSave called, sin name:', sin.name);
     
     if (isNew) {
-      createSin(sin);
+      const created = createSin(sin);
+      console.log('[SinEditPage] Sin created:', created.id, created.name);
+      toast.success(`Pecado "${sin.name}" guardado`);
     } else {
       updateSin(id!, sin);
+      toast.success(`Pecado "${sin.name}" actualizado`);
     }
+    
+    // Verify it was saved
+    const allSins = getSins();
+    console.log('[SinEditPage] After save, total sins:', allSins.length, allSins.map(s => s.name));
+    
     navigate("/sins");
   };
   
