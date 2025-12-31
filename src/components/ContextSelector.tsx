@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Check, Plus, ChevronRight, ChevronLeft } from "lucide-react";
+import { Check, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
 import { getPersonTypes, getActivities, type PersonType, type Activity } from "@/lib/entities";
 import { cn } from "@/lib/utils";
 
@@ -151,8 +151,8 @@ export function ContextSelector({ onGenerate }: ContextSelectorProps) {
               onClick={handleGenerate}
               className="w-full py-4 rounded-xl text-ios-headline font-semibold bg-primary text-primary-foreground flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] shadow-lg"
             >
-              <Plus className="w-5 h-5" />
-              {hasSelection ? "Generar examen" : "Examen completo"}
+              <Sparkles className="w-5 h-5" />
+              Generar examen
             </button>
           </div>
         </>
