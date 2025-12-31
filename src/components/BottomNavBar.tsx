@@ -17,6 +17,7 @@ export function BottomNavBar() {
           <NavLink
             key={to}
             to={to}
+            end={to === "/"}
             className={({ isActive }) =>
               cn(
                 "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors touch-target",
@@ -26,8 +27,15 @@ export function BottomNavBar() {
               )
             }
           >
-            <Icon className="w-6 h-6" />
-            <span className="text-ios-caption2">{label}</span>
+            {({ isActive }) => (
+              <div className={cn(
+                "flex flex-col items-center justify-center gap-0.5 rounded-lg px-3 py-1",
+                isActive && "ring-1 ring-accent"
+              )}>
+                <Icon className="w-6 h-6" />
+                <span className="text-ios-caption2">{label}</span>
+              </div>
+            )}
           </NavLink>
         ))}
       </div>
