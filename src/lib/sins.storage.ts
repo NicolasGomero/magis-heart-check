@@ -12,14 +12,18 @@ const STORAGE_KEY = 'magis_sins';
 export function getSins(): Sin[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
+    console.log('[sins.storage] getSins raw:', stored?.substring(0, 100));
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      console.log('[sins.storage] getSins parsed count:', parsed.length);
+      return parsed;
     }
   } catch (e) {
     console.error('Error reading sins:', e);
   }
   
   // Initialize with empty array (no default sins for now)
+  console.log('[sins.storage] getSins: no data, returning empty');
   saveSins([]);
   return [];
 }
@@ -52,6 +56,7 @@ export function createSin(data: Partial<Sin>): Sin {
   
   sins.push(newSin);
   saveSins(sins);
+  console.log('[sins.storage] Created sin:', newSin.name, 'Total sins:', sins.length);
   return newSin;
 }
 
