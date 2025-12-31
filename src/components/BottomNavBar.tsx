@@ -18,19 +18,14 @@ export function BottomNavBar() {
             key={to}
             to={to}
             end={to === "/"}
-            className={({ isActive }) =>
-              cn(
-                "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors touch-target",
-                isActive
-                  ? "text-accent"
-                  : "text-muted-foreground active:text-accent/70"
-              )
-            }
+            className="flex flex-col items-center justify-center flex-1 h-full touch-target"
           >
             {({ isActive }) => (
               <div className={cn(
-                "flex flex-col items-center justify-center gap-0.5 rounded-lg px-3 py-1",
-                isActive && "ring-1 ring-accent"
+                "flex flex-col items-center justify-center gap-0.5 rounded-lg px-3 py-1 transition-colors",
+                isActive
+                  ? "text-accent ring-1 ring-accent"
+                  : "text-muted-foreground active:text-accent/70"
               )}>
                 <Icon className="w-6 h-6" />
                 <span className="text-ios-caption2">{label}</span>
