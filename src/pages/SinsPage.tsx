@@ -24,17 +24,23 @@ function getGravityBadgeColor(gravity: Gravity): string {
 }
 
 export function SinsPage() {
-  const [sins, setSins] = useState<ReturnType<typeof getSins>>([]);
+  const [sins, setSins] = useState(() => getSins());
   
   const refreshSins = useCallback(() => {
-    setSins(getSins());
+    const updatedSins = getSins();
+    console.log('[SinsPage] refreshSins called, count:', updatedSins.length);
+    setSins(updatedSins);
   }, []);
   
   // Refresh sins on mount and when sins are updated
   useEffect(() => {
+    console.log('[SinsPage] useEffect mount, initial sins:', sins.length);
     refreshSins();
     
-    const handleSinsUpdated = () => refreshSins();
+    const handleSinsUpdated = () => {
+      console.log('[SinsPage] sins-updated event received');
+      refreshSins();
+    };
     window.addEventListener('sins-updated', handleSinsUpdated);
     
     return () => {
