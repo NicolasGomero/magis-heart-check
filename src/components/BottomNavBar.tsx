@@ -24,7 +24,7 @@ export function BottomNavBar() {
               <div className={cn(
                 "flex flex-col items-center justify-center gap-0.5 rounded-lg px-3 py-1 transition-colors",
                 isActive
-                  ? "text-accent ring-1 ring-accent"
+                  ? "text-accent"
                   : "text-muted-foreground active:text-accent/70"
               )}>
                 <Icon className="w-6 h-6" />
