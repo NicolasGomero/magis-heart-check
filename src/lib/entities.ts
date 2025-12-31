@@ -60,7 +60,7 @@ export function getPersonTypes(): PersonType[] {
   return DEFAULT_PERSON_TYPES;
 }
 
-function savePersonTypes(types: PersonType[]): void {
+export function savePersonTypes(types: PersonType[]): void {
   try {
     localStorage.setItem(STORAGE_KEYS.PERSON_TYPES, JSON.stringify(types));
   } catch (e) {
@@ -121,7 +121,7 @@ export function getActivities(): Activity[] {
   return DEFAULT_ACTIVITIES;
 }
 
-function saveActivities(activities: Activity[]): void {
+export function saveActivities(activities: Activity[]): void {
   try {
     localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(activities));
   } catch (e) {
