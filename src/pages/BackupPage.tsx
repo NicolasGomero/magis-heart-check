@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IOSHeader } from "@/components/IOSHeader";
 import { Download, Upload, AlertTriangle } from "lucide-react";
-import { getExaminations, getUserState } from "@/lib/storage";
+import { getExamSessions, getUserState } from "@/lib/examSessions";
+import { getPersonTypes, getActivities } from "@/lib/entities";
 
 export function BackupPage() {
   const navigate = useNavigate();
@@ -10,10 +11,12 @@ export function BackupPage() {
   
   const handleExport = () => {
     const data = {
-      examinations: getExaminations(),
+      examSessions: getExamSessions(),
       userState: getUserState(),
+      personTypes: getPersonTypes(),
+      activities: getActivities(),
       exportedAt: new Date().toISOString(),
-      version: "1.0.0",
+      version: "2.0.0",
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
