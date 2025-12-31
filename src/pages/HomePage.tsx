@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { ContextSelector } from "./ContextSelector";
-import { ExaminationFlow } from "./ExaminationFlow";
-import { IOSHeader } from "./IOSHeader";
+import { Link } from "react-router-dom";
+import { Settings } from "lucide-react";
+import { ContextSelector } from "@/components/ContextSelector";
+import { ExaminationFlow } from "@/components/ExaminationFlow";
+import { IOSHeader } from "@/components/IOSHeader";
 import { 
   getUserState, 
   getMinutesSinceLastExam, 
@@ -53,7 +55,7 @@ function StateIndicator({ state, timeAgo }: { state: ExamState; timeAgo: string 
   );
 }
 
-export function HomeScreen() {
+export function HomePage() {
   const [screen, setScreen] = useState<Screen>('home');
   const [selectedContext, setSelectedContext] = useState<Context | null>(null);
   const [userState, setUserState] = useState(getUserState);
@@ -99,7 +101,17 @@ export function HomeScreen() {
   
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <IOSHeader title="MAGIS" />
+      <IOSHeader 
+        title="MAGIS" 
+        rightAction={
+          <Link 
+            to="/settings" 
+            className="text-muted-foreground active:opacity-70 transition-opacity touch-target"
+          >
+            <Settings className="w-6 h-6" />
+          </Link>
+        }
+      />
       
       <div className="flex-1 py-6 space-y-6">
         {/* State indicator */}
@@ -123,7 +135,7 @@ export function HomeScreen() {
       </div>
       
       {/* Footer quote */}
-      <footer className="px-6 py-4 text-center safe-bottom">
+      <footer className="px-6 py-4 text-center pb-24">
         <p className="text-ios-caption text-muted-foreground/70 italic">
           "En todo amar y servir"
         </p>
@@ -131,3 +143,5 @@ export function HomeScreen() {
     </div>
   );
 }
+
+export default HomePage;

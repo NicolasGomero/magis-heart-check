@@ -26,7 +26,7 @@ export const PILLARS: { id: Pillar; label: string; description: string }[] = [
 ];
 
 // Questions database - contextual and focused
-const QUESTIONS: Question[] = [
+export const QUESTIONS: Question[] = [
   // GOD - Relationship with God
   { id: 'g1', pillar: 'god', text: '¿He sido consciente de la presencia de Dios?', contexts: ['general', 'home', 'work', 'transit', 'rest'] },
   { id: 'g2', pillar: 'god', text: '¿He agradecido algo hoy?', contexts: ['general', 'home', 'work', 'rest'] },
