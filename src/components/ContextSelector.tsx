@@ -41,7 +41,7 @@ export function ContextSelector({ onGenerate }: ContextSelectorProps) {
       {/* PersonTypes Section */}
       <div className="px-4 py-2">
         <p className="text-ios-footnote text-muted-foreground uppercase tracking-wide">
-          ¿Con quién has estado?
+          ¿Con qué personas has interactuado?
         </p>
       </div>
       
@@ -69,7 +69,7 @@ export function ContextSelector({ onGenerate }: ContextSelectorProps) {
       {/* Activities Section */}
       <div className="px-4 py-2">
         <p className="text-ios-footnote text-muted-foreground uppercase tracking-wide">
-          ¿Qué has hecho?
+          ¿Qué actividades has realizado?
         </p>
       </div>
       
