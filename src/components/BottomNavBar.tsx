@@ -1,8 +1,9 @@
-import { List, BarChart3, Plus } from "lucide-react";
+import { List, BarChart3, Plus, ClipboardCheck } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
+  { to: "/", icon: ClipboardCheck, label: "Examen" },
   { to: "/sins", icon: List, label: "Pecados" },
   { to: "/metrics", icon: BarChart3, label: "Métricas" },
   { to: "/sins/new", icon: Plus, label: "Añadir" },
