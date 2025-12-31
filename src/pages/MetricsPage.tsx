@@ -1,72 +1,48 @@
 import { useMemo } from "react";
 import { IOSHeader } from "@/components/IOSHeader";
-import { getExaminations, type ExaminationEntry } from "@/lib/storage";
-import { PILLARS } from "@/lib/questions";
+import { getExamSessions } from "@/lib/examSessions";
+import type { ExamSession } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PeriodStats {
   totalExams: number;
-  byPillar: Record<string, { marked: number; total: number }>;
+  totalEvents: number;
   averagePerDay: number;
 }
 
-function calculateStats(examinations: ExaminationEntry[], days: number): PeriodStats {
+function calculateStats(sessions: ExamSession[], days: number): PeriodStats {
   const now = Date.now();
   const cutoff = now - days * 24 * 60 * 60 * 1000;
   
-  const filtered = examinations.filter(e => e.timestamp >= cutoff);
+  const filtered = sessions.filter(s => s.startedAt >= cutoff);
   
-  const byPillar: Record<string, { marked: number; total: number }> = {
-    god: { marked: 0, total: 0 },
-    neighbor: { marked: 0, total: 0 },
-    self: { marked: 0, total: 0 },
-  };
-  
-  filtered.forEach(exam => {
-    exam.responses.forEach(r => {
-      if (byPillar[r.pillar]) {
-        byPillar[r.pillar].total += 1;
-        if (r.marked) byPillar[r.pillar].marked += 1;
-      }
+  let totalEvents = 0;
+  filtered.forEach(session => {
+    session.events.forEach(event => {
+      totalEvents += event.countIncrement;
     });
   });
   
   return {
     totalExams: filtered.length,
-    byPillar,
+    totalEvents,
     averagePerDay: filtered.length / days,
   };
 }
 
-function getPillarColor(pillar: string): string {
-  switch (pillar) {
-    case 'god': return 'bg-state-growth';
-    case 'neighbor': return 'bg-state-attention';
-    case 'self': return 'bg-state-peace';
-    default: return 'bg-muted';
-  }
-}
-
-function getStateLabel(percentage: number): { text: string; color: string } {
-  if (percentage >= 80) return { text: 'Excelente', color: 'text-state-peace' };
-  if (percentage >= 60) return { text: 'Bien', color: 'text-state-attention' };
-  if (percentage >= 40) return { text: 'En progreso', color: 'text-foreground' };
-  return { text: 'Necesita atención', color: 'text-state-growth' };
+function getStateLabel(examCount: number): { text: string; color: string } {
+  if (examCount >= 7) return { text: 'Constante', color: 'text-state-peace' };
+  if (examCount >= 4) return { text: 'En camino', color: 'text-state-attention' };
+  if (examCount >= 1) return { text: 'Iniciando', color: 'text-foreground' };
+  return { text: 'Sin exámenes', color: 'text-muted-foreground' };
 }
 
 export function MetricsPage() {
-  const examinations = getExaminations();
+  const sessions = getExamSessions();
   
-  const weekStats = useMemo(() => calculateStats(examinations, 7), [examinations]);
+  const weekStats = useMemo(() => calculateStats(sessions, 7), [sessions]);
   
-  const overallPercentage = useMemo(() => {
-    const totals = Object.values(weekStats.byPillar);
-    const totalMarked = totals.reduce((acc, p) => acc + p.marked, 0);
-    const totalCount = totals.reduce((acc, p) => acc + p.total, 0);
-    return totalCount > 0 ? Math.round((totalMarked / totalCount) * 100) : 0;
-  }, [weekStats]);
-  
-  const stateLabel = getStateLabel(overallPercentage);
+  const stateLabel = getStateLabel(weekStats.totalExams);
   
   return (
     <div className="min-h-screen bg-background">
@@ -84,41 +60,26 @@ export function MetricsPage() {
           <p className="text-ios-subhead text-muted-foreground">
             {weekStats.totalExams} exámenes · {weekStats.averagePerDay.toFixed(1)} por día
           </p>
+          {weekStats.totalEvents > 0 && (
+            <p className="text-ios-caption text-muted-foreground/70 mt-1">
+              {weekStats.totalEvents} marcaciones totales
+            </p>
+          )}
         </div>
         
-        {/* By pillar */}
-        <div className="space-y-3">
-          <h2 className="text-ios-headline text-foreground px-1">Por pilar</h2>
-          
-          {PILLARS.map(pillar => {
-            const stats = weekStats.byPillar[pillar.id];
-            const percentage = stats.total > 0 
-              ? Math.round((stats.marked / stats.total) * 100) 
-              : 0;
-            
-            return (
-              <div 
-                key={pillar.id}
-                className="bg-card rounded-xl p-4 border border-border"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-ios-body text-foreground">{pillar.label}</span>
-                  <span className="text-ios-subhead text-muted-foreground">
-                    {stats.marked}/{stats.total}
-                  </span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className={cn("h-full rounded-full transition-all", getPillarColor(pillar.id))}
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+        {/* Summary cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-card rounded-xl p-4 border border-border">
+            <p className="text-ios-caption text-muted-foreground">Exámenes</p>
+            <p className="text-2xl font-semibold text-foreground">{weekStats.totalExams}</p>
+          </div>
+          <div className="bg-card rounded-xl p-4 border border-border">
+            <p className="text-ios-caption text-muted-foreground">Marcaciones</p>
+            <p className="text-2xl font-semibold text-foreground">{weekStats.totalEvents}</p>
+          </div>
         </div>
         
-        {examinations.length === 0 && (
+        {sessions.length === 0 && (
           <div className="text-center py-8">
             <p className="text-ios-body text-muted-foreground">
               Realiza tu primer examen para ver métricas
