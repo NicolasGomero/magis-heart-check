@@ -27,25 +27,15 @@ export function SinsPage() {
   const [sins, setSins] = useState(() => getSins());
   
   const refreshSins = useCallback(() => {
-    const updatedSins = getSins();
-    console.log('[SinsPage] refreshSins called, count:', updatedSins.length);
-    setSins(updatedSins);
+    setSins(getSins());
   }, []);
   
   // Refresh sins on mount and when sins are updated
   useEffect(() => {
-    console.log('[SinsPage] useEffect mount, initial sins:', sins.length);
     refreshSins();
     
-    const handleSinsUpdated = () => {
-      console.log('[SinsPage] sins-updated event received');
-      refreshSins();
-    };
-    window.addEventListener('sins-updated', handleSinsUpdated);
-    
-    return () => {
-      window.removeEventListener('sins-updated', handleSinsUpdated);
-    };
+    window.addEventListener('sins-updated', refreshSins);
+    return () => window.removeEventListener('sins-updated', refreshSins);
   }, [refreshSins]);
   
   return (

@@ -52,7 +52,6 @@ export function createSin(data: Partial<Sin>): Sin {
   
   sins.push(newSin);
   saveSins(sins);
-  console.log('[sins.storage] Created sin:', newSin.name, 'Total sins:', sins.length);
   return newSin;
 }
 
