@@ -81,38 +81,30 @@ export function HomePage() {
   
   const handleGenerate = (personTypes: string[], activities: string[]) => {
     const allSins = getSins();
-    const hasSelection = personTypes.length > 0 || activities.length > 0;
+    const hasPersonTypes = personTypes.length > 0;
+    const hasActivities = activities.length > 0;
     
     let sinsToShow: string[];
     
-    if (!hasSelection) {
+    if (!hasPersonTypes && !hasActivities) {
       // No selection = show all sins
       sinsToShow = allSins.map(s => s.id);
     } else {
-      // Union (OR) of sins matching any selected personType OR activity
-      // Also include sins that have NO context restrictions (empty involvedPersonTypes AND empty associatedActivities)
-      const sinIdsSet = new Set<string>();
-      
-      allSins.forEach(sin => {
-        // Sin has no context restrictions = always show when there's a selection
-        const hasNoRestrictions = sin.involvedPersonTypes.length === 0 && sin.associatedActivities.length === 0;
+      // Filter with strict AND logic
+      const filtered = allSins.filter(sin => {
+        // Must match selected person types (if any are selected)
+        const matchesPersonType = !hasPersonTypes || 
+          personTypes.some(pt => sin.involvedPersonTypes.includes(pt));
         
-        // Check if sin is associated with any selected personType
-        const matchesPersonType = personTypes.some(pt => 
-          sin.involvedPersonTypes.includes(pt)
-        );
+        // Must match selected activities (if any are selected)
+        const matchesActivity = !hasActivities || 
+          activities.some(act => sin.associatedActivities.includes(act));
         
-        // Check if sin is associated with any selected activity
-        const matchesActivity = activities.some(act => 
-          sin.associatedActivities.includes(act)
-        );
-        
-        if (hasNoRestrictions || matchesPersonType || matchesActivity) {
-          sinIdsSet.add(sin.id);
-        }
+        // BOTH conditions must be satisfied
+        return matchesPersonType && matchesActivity;
       });
       
-      sinsToShow = Array.from(sinIdsSet);
+      sinsToShow = filtered.map(s => s.id);
     }
     
     setExamContext({
