@@ -159,22 +159,16 @@ export function SinEditPage() {
       return;
     }
     
-    console.log('[SinEditPage] handleSave called, sin name:', sin.name);
-    
     if (isNew) {
-      const created = createSin(sin);
-      console.log('[SinEditPage] Sin created:', created.id, created.name);
+      createSin(sin);
       toast.success(`Pecado "${sin.name}" guardado`);
     } else {
       updateSin(id!, sin);
       toast.success(`Pecado "${sin.name}" actualizado`);
     }
     
-    // Verify it was saved
-    const allSins = getSins();
-    console.log('[SinEditPage] After save, total sins:', allSins.length, allSins.map(s => s.name));
-    
-    navigate("/sins");
+    // Navigate after a brief delay to ensure event is dispatched
+    setTimeout(() => navigate("/sins"), 50);
   };
   
   const handleDelete = () => {
@@ -192,10 +186,7 @@ export function SinEditPage() {
         rightAction={
           <button 
             type="button"
-            onClick={() => {
-              console.log('[SinEditPage] Save button clicked');
-              handleSave();
-            }}
+            onClick={handleSave}
             disabled={!sin.name.trim()}
             className="text-accent text-ios-body font-medium disabled:opacity-50 disabled:cursor-not-allowed py-2 px-3 -mr-3 active:opacity-70 transition-opacity"
           >
