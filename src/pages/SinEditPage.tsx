@@ -128,7 +128,7 @@ function MultiSelect<T extends string>({
 export function SinEditPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isNew = id === "new";
+  const isNew = !id || id === "new";  // undefined OR "new" = new sin
   
   const [sin, setSin] = useState<Sin>(() => {
     if (isNew) {
