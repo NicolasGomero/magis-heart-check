@@ -191,9 +191,13 @@ export function SinEditPage() {
         onBack={() => navigate(-1)}
         rightAction={
           <button 
-            onClick={handleSave}
+            type="button"
+            onClick={() => {
+              console.log('[SinEditPage] Save button clicked');
+              handleSave();
+            }}
             disabled={!sin.name.trim()}
-            className="text-accent text-ios-body disabled:opacity-50 disabled:cursor-not-allowed touch-target"
+            className="text-accent text-ios-body font-medium disabled:opacity-50 disabled:cursor-not-allowed py-2 px-3 -mr-3 active:opacity-70 transition-opacity"
           >
             Guardar
           </button>
