@@ -81,17 +81,22 @@ export function HomePage() {
   
   const handleGenerate = (personTypes: string[], activities: string[]) => {
     const allSins = getSins();
+    const hasSelection = personTypes.length > 0 || activities.length > 0;
     
     let sinsToShow: string[];
     
-    if (personTypes.length === 0 && activities.length === 0) {
+    if (!hasSelection) {
       // No selection = show all sins
       sinsToShow = allSins.map(s => s.id);
     } else {
-      // Union (OR) of sins matching any selected personType OR any selected activity
+      // Union (OR) of sins matching any selected personType OR activity
+      // Also include sins that have NO context restrictions (empty involvedPersonTypes AND empty associatedActivities)
       const sinIdsSet = new Set<string>();
       
       allSins.forEach(sin => {
+        // Sin has no context restrictions = always show when there's a selection
+        const hasNoRestrictions = sin.involvedPersonTypes.length === 0 && sin.associatedActivities.length === 0;
+        
         // Check if sin is associated with any selected personType
         const matchesPersonType = personTypes.some(pt => 
           sin.involvedPersonTypes.includes(pt)
@@ -102,7 +107,7 @@ export function HomePage() {
           sin.associatedActivities.includes(act)
         );
         
-        if (matchesPersonType || matchesActivity) {
+        if (hasNoRestrictions || matchesPersonType || matchesActivity) {
           sinIdsSet.add(sin.id);
         }
       });
