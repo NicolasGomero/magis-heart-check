@@ -154,21 +154,37 @@ export function SinEditPage() {
   };
   
   const handleSave = () => {
+    console.log('[SinEditPage] handleSave CALLED');
+    console.log('[SinEditPage] isNew:', isNew, 'id:', id);
+    console.log('[SinEditPage] sin.name:', sin.name);
+    
     if (!sin.name.trim()) {
+      console.log('[SinEditPage] Name empty, showing error');
       toast.error("El nombre es requerido");
       return;
     }
     
+    console.log('[SinEditPage] Proceeding to save...');
+    
     if (isNew) {
-      createSin(sin);
+      const created = createSin(sin);
+      console.log('[SinEditPage] Sin CREATED with id:', created.id);
       toast.success(`Pecado "${sin.name}" guardado`);
     } else {
-      updateSin(id!, sin);
+      const updated = updateSin(id!, sin);
+      console.log('[SinEditPage] Sin UPDATED:', updated?.id);
       toast.success(`Pecado "${sin.name}" actualizado`);
     }
     
+    // Verify localStorage immediately after save
+    const storedAfter = localStorage.getItem('magis_sins');
+    console.log('[SinEditPage] localStorage after save:', storedAfter ? JSON.parse(storedAfter).length + ' sins' : 'null');
+    
     // Navigate after a brief delay to ensure event is dispatched
-    setTimeout(() => navigate("/sins"), 50);
+    setTimeout(() => {
+      console.log('[SinEditPage] Navigating to /sins');
+      navigate("/sins");
+    }, 100);
   };
   
   const handleDelete = () => {
@@ -522,9 +538,23 @@ export function SinEditPage() {
           </div>
         </section>
         
+        {/* Alternative save button */}
+        <button
+          type="button"
+          onClick={() => {
+            console.log('[SinEditPage] Alternative save button clicked');
+            handleSave();
+          }}
+          disabled={!sin.name.trim()}
+          className="w-full py-4 bg-accent text-accent-foreground rounded-xl text-ios-body font-medium flex items-center justify-center gap-2 active:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Guardar pecado
+        </button>
+        
         {/* Delete button */}
         {!isNew && (
           <button
+            type="button"
             onClick={handleDelete}
             className="w-full py-4 bg-destructive/10 text-destructive rounded-xl text-ios-body font-medium flex items-center justify-center gap-2 active:opacity-90 transition-opacity"
           >

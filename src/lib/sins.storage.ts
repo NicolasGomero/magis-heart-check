@@ -23,12 +23,18 @@ export function getSins(): Sin[] {
 }
 
 function saveSins(sins: Sin[]): void {
+  console.log('[sins.storage] saveSins called with', sins.length, 'sins');
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sins));
+    const json = JSON.stringify(sins);
+    localStorage.setItem(STORAGE_KEY, json);
+    console.log('[sins.storage] localStorage.setItem SUCCESS');
+    
     // Dispatch custom event to notify listeners
+    console.log('[sins.storage] Dispatching sins-updated event');
     window.dispatchEvent(new CustomEvent('sins-updated'));
+    console.log('[sins.storage] Event dispatched');
   } catch (e) {
-    console.error('Error saving sins:', e);
+    console.error('[sins.storage] Error saving sins:', e);
   }
 }
 
