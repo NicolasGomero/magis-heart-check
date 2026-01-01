@@ -55,9 +55,8 @@ export function ExaminationFlow({
   
   // Filter and deduplicate sins - each sin appears only in its highest priority term
   const sinsByTerm = useMemo(() => {
-    const sinsToDisplay = sinsToShow.length === 0 
-      ? allSins 
-      : allSins.filter(s => sinsToShow.includes(s.id));
+    // Always filter by sinsToShow - an empty array means no sins match the filter
+    const sinsToDisplay = allSins.filter(s => sinsToShow.includes(s.id));
     
     const grouped: Record<Term, Sin[]> = {
       'contra_dios': [],
