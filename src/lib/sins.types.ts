@@ -165,6 +165,7 @@ export interface Sin {
   createdAt: number;
   updatedAt: number;
   isDefault?: boolean; // Built-in sins
+  isDisabled?: boolean; // If true, won't appear in exams
 }
 
 // ========== Color Palettes ==========
@@ -243,5 +244,6 @@ export function createDefaultSin(id: string): Sin {
     unitPerTap: 1,
     createdAt: now,
     updatedAt: now,
+    isDisabled: false,
   };
 }
