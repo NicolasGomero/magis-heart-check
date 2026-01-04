@@ -1,10 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
-import { Plus, ChevronRight, EyeOff, Eye } from "lucide-react";
+import { Plus, MoreVertical, EyeOff, Eye, Minus, Pencil, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { IOSHeader } from "@/components/IOSHeader";
-import { getBuenasObras, toggleBuenaObraDisabled } from "@/lib/buenasObras.storage";
+import { getBuenasObras, toggleBuenaObraDisabled, deleteBuenaObra } from "@/lib/buenasObras.storage";
 import type { BuenaObra, BuenaObraTerm } from "@/lib/buenasObras.types";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 function getTermBadgeColor(term: BuenaObraTerm) {
   switch (term) {
@@ -38,6 +45,17 @@ export default function BuenasObrasPage() {
     e.preventDefault();
     e.stopPropagation();
     toggleBuenaObraDisabled(id);
+  };
+
+  const handleDiscount = (id: string) => {
+    toast.info("Funcionalidad de descontar próximamente");
+  };
+
+  const handleDelete = (id: string, name: string) => {
+    if (confirm(`¿Eliminar la buena obra "${name}"?`)) {
+      deleteBuenaObra(id);
+      toast.success(`Buena obra "${name}" eliminada`);
+    }
   };
 
   const getPrimaryTerm = (buenaObra: BuenaObra): BuenaObraTerm | null => buenaObra.terms[0] || null;
@@ -88,34 +106,60 @@ export default function BuenasObrasPage() {
                   )}
                 </button>
 
-                {/* Main content - clickable link */}
-                <Link
-                  to={`/obras/buenas/${buenaObra.id}`}
-                  className="flex-1 min-w-0 flex items-center gap-3 transition-colors active:bg-muted/50 -my-3 py-3"
+                {/* Main content - clickable to detail/metrics */}
+                <button
+                  onClick={() => navigate(`/obras/buenas/${buenaObra.id}/detalle`)}
+                  className="flex-1 min-w-0 text-left"
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-ios-body font-medium text-foreground truncate">
-                      {buenaObra.name}
+                  <p className="text-ios-body font-medium text-foreground truncate">
+                    {buenaObra.name}
+                  </p>
+                  {buenaObra.shortDescription && (
+                    <p className="text-ios-caption text-muted-foreground truncate">
+                      {buenaObra.shortDescription}
                     </p>
-                    {buenaObra.shortDescription && (
-                      <p className="text-ios-caption text-muted-foreground truncate">
-                        {buenaObra.shortDescription}
-                      </p>
-                    )}
-                    {primaryTerm && (
-                      <div className="flex gap-2 mt-1">
-                        <span className={cn(
-                          "text-ios-caption2 px-2 py-0.5 rounded-full",
-                          getTermBadgeColor(primaryTerm)
-                        )}>
-                          {primaryTerm === 'hacia_dios' ? 'Dios' : 
-                           primaryTerm === 'hacia_projimo' ? 'Prójimo' : 'Uno mismo'}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                </Link>
+                  )}
+                  {primaryTerm && (
+                    <div className="flex gap-2 mt-1">
+                      <span className={cn(
+                        "text-ios-caption2 px-2 py-0.5 rounded-full",
+                        getTermBadgeColor(primaryTerm)
+                      )}>
+                        {primaryTerm === 'hacia_dios' ? 'Dios' : 
+                         primaryTerm === 'hacia_projimo' ? 'Prójimo' : 'Uno mismo'}
+                      </span>
+                    </div>
+                  )}
+                </button>
+
+                {/* Three dots menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button 
+                      className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-popover">
+                    <DropdownMenuItem onClick={() => handleDiscount(buenaObra.id)}>
+                      <Minus className="w-4 h-4 mr-2" />
+                      Descontar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(`/obras/buenas/${buenaObra.id}`)}>
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Editar buena obra
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleDelete(buenaObra.id, buenaObra.name)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             );
           })}

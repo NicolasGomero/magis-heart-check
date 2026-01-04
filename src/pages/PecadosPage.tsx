@@ -1,10 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
-import { Plus, ChevronRight, EyeOff, Eye } from "lucide-react";
+import { Plus, MoreVertical, EyeOff, Eye, Minus, Pencil, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { IOSHeader } from "@/components/IOSHeader";
-import { getSins, toggleSinDisabled } from "@/lib/sins.storage";
+import { getSins, toggleSinDisabled, deleteSin } from "@/lib/sins.storage";
 import type { Sin, Term, Gravity } from "@/lib/sins.types";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 function getTermBadgeColor(term: Term) {
   switch (term) {
@@ -48,7 +55,18 @@ export default function PecadosPage() {
     toggleSinDisabled(sinId);
   };
 
-  // Get primary term and gravity for display (first in arrays)
+  const handleDiscount = (sinId: string) => {
+    // TODO: Implement discount functionality
+    toast.info("Funcionalidad de descontar próximamente");
+  };
+
+  const handleDelete = (sinId: string, sinName: string) => {
+    if (confirm(`¿Eliminar el pecado "${sinName}"?`)) {
+      deleteSin(sinId);
+      toast.success(`Pecado "${sinName}" eliminado`);
+    }
+  };
+
   const getPrimaryTerm = (sin: Sin): Term | null => sin.terms[0] || null;
   const getPrimaryGravity = (sin: Sin): Gravity | null => sin.gravities[0] || null;
 
@@ -99,42 +117,68 @@ export default function PecadosPage() {
                   )}
                 </button>
 
-                {/* Main content - clickable link */}
-                <Link
-                  to={`/sins/${sin.id}`}
-                  className="flex-1 min-w-0 flex items-center gap-3 transition-colors active:bg-muted/50 -my-3 py-3"
+                {/* Main content - clickable to detail/metrics */}
+                <button
+                  onClick={() => navigate(`/obras/pecados/${sin.id}/detalle`)}
+                  className="flex-1 min-w-0 text-left"
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-ios-body font-medium text-foreground truncate">
-                      {sin.name}
+                  <p className="text-ios-body font-medium text-foreground truncate">
+                    {sin.name}
+                  </p>
+                  {sin.shortDescription && (
+                    <p className="text-ios-caption text-muted-foreground truncate">
+                      {sin.shortDescription}
                     </p>
-                    {sin.shortDescription && (
-                      <p className="text-ios-caption text-muted-foreground truncate">
-                        {sin.shortDescription}
-                      </p>
+                  )}
+                  <div className="flex gap-2 mt-1">
+                    {primaryTerm && (
+                      <span className={cn(
+                        "text-ios-caption2 px-2 py-0.5 rounded-full",
+                        getTermBadgeColor(primaryTerm)
+                      )}>
+                        {primaryTerm === 'contra_dios' ? 'Dios' : 
+                         primaryTerm === 'contra_projimo' ? 'Prójimo' : 'Uno mismo'}
+                      </span>
                     )}
-                    <div className="flex gap-2 mt-1">
-                      {primaryTerm && (
-                        <span className={cn(
-                          "text-ios-caption2 px-2 py-0.5 rounded-full",
-                          getTermBadgeColor(primaryTerm)
-                        )}>
-                          {primaryTerm === 'contra_dios' ? 'Dios' : 
-                           primaryTerm === 'contra_projimo' ? 'Prójimo' : 'Uno mismo'}
-                        </span>
-                      )}
-                      {primaryGravity && (
-                        <span className={cn(
-                          "text-ios-caption2 px-2 py-0.5 rounded-full",
-                          getGravityBadgeColor(primaryGravity)
-                        )}>
-                          {primaryGravity === 'mortal' ? 'Mortal' : 'Venial'}
-                        </span>
-                      )}
-                    </div>
+                    {primaryGravity && (
+                      <span className={cn(
+                        "text-ios-caption2 px-2 py-0.5 rounded-full",
+                        getGravityBadgeColor(primaryGravity)
+                      )}>
+                        {primaryGravity === 'mortal' ? 'Mortal' : 'Venial'}
+                      </span>
+                    )}
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                </Link>
+                </button>
+
+                {/* Three dots menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button 
+                      className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-popover">
+                    <DropdownMenuItem onClick={() => handleDiscount(sin.id)}>
+                      <Minus className="w-4 h-4 mr-2" />
+                      Descontar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(`/sins/${sin.id}`)}>
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Editar pecado
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleDelete(sin.id, sin.name)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             );
           })}
