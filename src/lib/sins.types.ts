@@ -24,8 +24,8 @@ export const GRAVITY_LABELS: Record<Gravity, string> = {
 };
 
 export const MATERIA_TIPO_LABELS: Record<MateriaTipo, string> = {
-  ex_toto: 'Ex toto (materia siempre grave)',
-  ex_genere: 'Ex genere (grave por naturaleza, admite parvedad)',
+  ex_toto: 'Grave ex toto',
+  ex_genere: 'Grave ex genere',
   venial_propio_genero: 'Venial de propio género',
 };
 
@@ -55,41 +55,69 @@ export const RESET_CYCLE_LABELS: Record<ResetCycle, string> = {
 
 // ========== Default Values for Multi-select ==========
 
-export const DEFAULT_OPPOSITE_VIRTUES = [
-  'Fe',
-  'Esperanza',
-  'Caridad',
-  'Prudencia',
-  'Justicia',
-  'Fortaleza',
-  'Templanza',
+// Virtudes divididas por categorías
+export const VIRTUES_TEOLOGALES = ['Fe', 'Esperanza', 'Caridad'];
+
+export const VIRTUES_CARDINALES = ['Prudencia', 'Justicia', 'Fortaleza', 'Templanza'];
+
+export const VIRTUES_ANEXAS_INICIAL = [
   'Religión',
-  'Piedad',
+  'Magnanimidad',
+  'Paciencia',
   'Humildad',
+  'Honestidad',
+];
+
+export const VIRTUES_ANEXAS_COMPLETA = [
+  'Religión',
+  'Magnanimidad',
+  'Paciencia',
+  'Humildad',
+  'Honestidad',
+  'Piedad',
   'Mansedumbre',
   'Castidad',
   'Pobreza',
   'Obediencia',
+  'Estudiosidad',
+  'Modestia',
+  'Abstinencia',
+  'Sobriedad',
+  'Liberalidad',
+  'Afabilidad',
+  'Veracidad',
+  'Eutrapelia',
+  'Perseverancia',
+  'Continencia',
 ];
 
+// Legacy - para compatibilidad
+export const DEFAULT_OPPOSITE_VIRTUES = [
+  ...VIRTUES_TEOLOGALES,
+  ...VIRTUES_CARDINALES,
+  ...VIRTUES_ANEXAS_COMPLETA,
+];
+
+// Pecados capitales en orden correcto
 export const DEFAULT_CAPITAL_SINS = [
   'Vanagloria',
-  'Ira',
-  'Acidia',
-  'Envidia',
-  'Lujuria',
   'Avaricia',
+  'Lujuria',
+  'Ira',
   'Gula',
+  'Envidia',
+  'Acidia',
 ];
 
+// Votos (sin "Ninguno")
 export const DEFAULT_VOWS = [
   'Pobreza',
   'Castidad',
   'Obediencia',
-  'Ninguno',
 ];
 
-export const DEFAULT_SPIRITUAL_ASPECTS = [
+// Medios espirituales (renombrado desde aspectos espirituales)
+export const DEFAULT_SPIRITUAL_MEANS = [
   'Abnegación',
   'María',
   'Liturgia',
@@ -100,6 +128,25 @@ export const DEFAULT_SPIRITUAL_ASPECTS = [
   'Espíritu de Servicio',
   'Mortificación',
   'Silencio',
+];
+
+// Legacy alias
+export const DEFAULT_SPIRITUAL_ASPECTS = DEFAULT_SPIRITUAL_MEANS;
+
+// Condicionantes del sujeto
+export const DEFAULT_CONDICIONANTES = [
+  'Fatiga',
+  'Enfermedad',
+  'Estrés',
+  'Falta de sueño',
+  'Hambre',
+  'Prisa',
+  'Miedo',
+  'Ira previa',
+  'Tristeza',
+  'Soledad',
+  'Tentación fuerte',
+  'Costumbre arraigada',
 ];
 
 // ========== Note Interface ==========
@@ -140,10 +187,11 @@ export interface Sin {
   oppositeVirtues: string[]; // Allows custom values
   capitalSins: string[]; // From default list
   vows: string[]; // Multi-select
-  spiritualAspects: string[]; // Allows custom values
+  spiritualAspects: string[]; // Medios espirituales - allows custom values
   manifestations: Manifestation[];
   objectTypes: ObjectType[];
   modes: Mode[];
+  condicionantes: string[]; // Condicionantes del sujeto
   
   // Relations (multi-select, stores IDs)
   involvedPersonTypes: string[];
@@ -234,6 +282,7 @@ export function createDefaultSin(id: string): Sin {
     manifestations: [],
     objectTypes: [],
     modes: [],
+    condicionantes: [],
     involvedPersonTypes: [],
     associatedActivities: [],
     resetCycle: 'no',
