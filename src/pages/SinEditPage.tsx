@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Info, ChevronRight } from "lucide-react";
 import { IOSHeader } from "@/components/IOSHeader";
-import { getSin, createSin, updateSin, deleteSin, getSins } from "@/lib/sins.storage";
+import { getSin, createSin, updateSin, deleteSin } from "@/lib/sins.storage";
 import { toast } from "sonner";
 import { getPersonTypes, getActivities } from "@/lib/entities";
 import {
@@ -14,10 +14,14 @@ import {
   OBJECT_TYPE_LABELS,
   MODE_LABELS,
   RESET_CYCLE_LABELS,
-  DEFAULT_OPPOSITE_VIRTUES,
+  VIRTUES_TEOLOGALES,
+  VIRTUES_CARDINALES,
+  VIRTUES_ANEXAS_INICIAL,
+  VIRTUES_ANEXAS_COMPLETA,
   DEFAULT_CAPITAL_SINS,
   DEFAULT_VOWS,
-  DEFAULT_SPIRITUAL_ASPECTS,
+  DEFAULT_SPIRITUAL_MEANS,
+  DEFAULT_CONDICIONANTES,
   COLOR_PALETTES,
   deduceAdmiteParvedad,
   type Term,
@@ -30,11 +34,25 @@ import {
   type Sin,
 } from "@/lib/sins.types";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 // ========== Multi-select Component ==========
 
 interface MultiSelectProps<T extends string> {
   label: string;
+  labelIcon?: React.ReactNode;
+  onInfoClick?: () => void;
   options: { value: T; label: string }[];
   selected: T[];
   onChange: (selected: T[]) => void;
@@ -43,6 +61,8 @@ interface MultiSelectProps<T extends string> {
 
 function MultiSelect<T extends string>({ 
   label, 
+  labelIcon,
+  onInfoClick,
   options, 
   selected, 
   onChange,
@@ -67,9 +87,21 @@ function MultiSelect<T extends string>({
   
   return (
     <div>
-      <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
-        {label}
-      </label>
+      <div className="flex items-center gap-2 mb-2">
+        <label className="text-ios-caption text-muted-foreground uppercase tracking-wide">
+          {label}
+        </label>
+        {labelIcon}
+        {onInfoClick && (
+          <button 
+            type="button" 
+            onClick={onInfoClick}
+            className="text-primary"
+          >
+            <Info className="w-4 h-4" />
+          </button>
+        )}
+      </div>
       <div className="flex flex-wrap gap-2">
         {options.map(opt => (
           <button
@@ -123,12 +155,157 @@ function MultiSelect<T extends string>({
   );
 }
 
+// ========== Expandable Multi-select with "Ver más" ==========
+
+interface ExpandableMultiSelectProps {
+  label: string;
+  initialOptions: string[];
+  allOptions: string[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+  allowCustom?: boolean;
+  sheetTitle: string;
+}
+
+function ExpandableMultiSelect({
+  label,
+  initialOptions,
+  allOptions,
+  selected,
+  onChange,
+  allowCustom = false,
+  sheetTitle,
+}: ExpandableMultiSelectProps) {
+  const [showSheet, setShowSheet] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [customValue, setCustomValue] = useState('');
+  
+  const toggle = (value: string) => {
+    if (selected.includes(value)) {
+      onChange(selected.filter(v => v !== value));
+    } else {
+      onChange([...selected, value]);
+    }
+  };
+  
+  const addCustom = () => {
+    if (customValue.trim() && !selected.includes(customValue.trim())) {
+      onChange([...selected, customValue.trim()]);
+      setCustomValue('');
+    }
+  };
+  
+  const filteredOptions = allOptions.filter(opt =>
+    opt.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  return (
+    <div>
+      <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
+        {label}
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {initialOptions.map(opt => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => toggle(opt)}
+            className={cn(
+              "py-1.5 px-3 rounded-full text-ios-subhead transition-colors",
+              selected.includes(opt)
+                ? "bg-accent text-accent-foreground"
+                : "bg-card border border-border text-foreground active:bg-muted/50"
+            )}
+          >
+            {opt}
+          </button>
+        ))}
+        {/* Show selected values not in initial options */}
+        {selected
+          .filter(v => !initialOptions.includes(v))
+          .map(v => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => toggle(v)}
+              className="py-1.5 px-3 rounded-full text-ios-subhead bg-accent text-accent-foreground"
+            >
+              {v}
+            </button>
+          ))}
+      </div>
+      
+      <button
+        type="button"
+        onClick={() => setShowSheet(true)}
+        className="flex items-center gap-1 mt-2 text-primary text-ios-caption"
+      >
+        Ver más <ChevronRight className="w-3 h-3" />
+      </button>
+      
+      {allowCustom && (
+        <div className="flex gap-2 mt-2">
+          <input
+            type="text"
+            value={customValue}
+            onChange={(e) => setCustomValue(e.target.value)}
+            placeholder="Añadir nuevo..."
+            className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-ios-subhead text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-accent/50"
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustom())}
+          />
+          <button
+            type="button"
+            onClick={addCustom}
+            className="px-3 py-2 bg-accent text-accent-foreground rounded-lg"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+      
+      <Sheet open={showSheet} onOpenChange={setShowSheet}>
+        <SheetContent side="bottom" className="h-[80vh]">
+          <SheetHeader>
+            <SheetTitle>{sheetTitle}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-4">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar..."
+              className="w-full bg-card border border-border rounded-lg px-3 py-2 text-ios-body text-foreground placeholder:text-muted-foreground/50"
+            />
+            <div className="flex flex-wrap gap-2 max-h-[50vh] overflow-auto">
+              {filteredOptions.map(opt => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => toggle(opt)}
+                  className={cn(
+                    "py-1.5 px-3 rounded-full text-ios-subhead transition-colors",
+                    selected.includes(opt)
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-card border border-border text-foreground"
+                  )}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
+
 // ========== Main Component ==========
 
 export function SinEditPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isNew = !id || id === "new";  // undefined OR "new" = new sin
+  const isNew = !id || id === "new";
   
   const [sin, setSin] = useState<Sin>(() => {
     if (isNew) {
@@ -139,6 +316,7 @@ export function SinEditPage() {
   
   const [personTypes] = useState(getPersonTypes);
   const [activities] = useState(getActivities);
+  const [showMateriaInfo, setShowMateriaInfo] = useState(false);
   
   const updateField = <K extends keyof Sin>(field: K, value: Sin[K]) => {
     setSin(prev => {
@@ -154,35 +332,20 @@ export function SinEditPage() {
   };
   
   const handleSave = () => {
-    console.log('[SinEditPage] handleSave CALLED');
-    console.log('[SinEditPage] isNew:', isNew, 'id:', id);
-    console.log('[SinEditPage] sin.name:', sin.name);
-    
     if (!sin.name.trim()) {
-      console.log('[SinEditPage] Name empty, showing error');
       toast.error("El nombre es requerido");
       return;
     }
     
-    console.log('[SinEditPage] Proceeding to save...');
-    
     if (isNew) {
-      const created = createSin(sin);
-      console.log('[SinEditPage] Sin CREATED with id:', created.id);
+      createSin(sin);
       toast.success(`Pecado "${sin.name}" guardado`);
     } else {
-      const updated = updateSin(id!, sin);
-      console.log('[SinEditPage] Sin UPDATED:', updated?.id);
+      updateSin(id!, sin);
       toast.success(`Pecado "${sin.name}" actualizado`);
     }
     
-    // Verify localStorage immediately after save
-    const storedAfter = localStorage.getItem('magis_sins');
-    console.log('[SinEditPage] localStorage after save:', storedAfter ? JSON.parse(storedAfter).length + ' sins' : 'null');
-    
-    // Navigate after a brief delay to ensure event is dispatched
     setTimeout(() => {
-      console.log('[SinEditPage] Navigating to /obras/pecados');
       navigate("/obras/pecados");
     }, 100);
   };
@@ -280,6 +443,7 @@ export function SinEditPage() {
           
           <MultiSelect
             label="Tipo de materia"
+            onInfoClick={() => setShowMateriaInfo(true)}
             options={Object.entries(MATERIA_TIPO_LABELS).map(([value, label]) => ({ 
               value: value as MateriaTipo, 
               label 
@@ -306,17 +470,50 @@ export function SinEditPage() {
           </div>
         </section>
         
+        {/* Virtues - split into 3 categories */}
+        <section className="space-y-4">
+          <h2 className="text-ios-headline text-foreground">Virtudes opuestas</h2>
+          
+          <MultiSelect
+            label="Virtud teologal"
+            options={VIRTUES_TEOLOGALES.map(v => ({ value: v, label: v }))}
+            selected={sin.oppositeVirtues.filter(v => VIRTUES_TEOLOGALES.includes(v))}
+            onChange={(v) => {
+              const otherVirtues = sin.oppositeVirtues.filter(ov => !VIRTUES_TEOLOGALES.includes(ov));
+              updateField('oppositeVirtues', [...v, ...otherVirtues]);
+            }}
+          />
+          
+          <MultiSelect
+            label="Virtud moral cardinal"
+            options={VIRTUES_CARDINALES.map(v => ({ value: v, label: v }))}
+            selected={sin.oppositeVirtues.filter(v => VIRTUES_CARDINALES.includes(v))}
+            onChange={(v) => {
+              const otherVirtues = sin.oppositeVirtues.filter(ov => !VIRTUES_CARDINALES.includes(ov));
+              updateField('oppositeVirtues', [...otherVirtues, ...v]);
+            }}
+          />
+          
+          <ExpandableMultiSelect
+            label="Virtud moral anexa"
+            initialOptions={VIRTUES_ANEXAS_INICIAL}
+            allOptions={VIRTUES_ANEXAS_COMPLETA}
+            selected={sin.oppositeVirtues.filter(v => 
+              !VIRTUES_TEOLOGALES.includes(v) && !VIRTUES_CARDINALES.includes(v)
+            )}
+            onChange={(v) => {
+              const teologales = sin.oppositeVirtues.filter(ov => VIRTUES_TEOLOGALES.includes(ov));
+              const cardinales = sin.oppositeVirtues.filter(ov => VIRTUES_CARDINALES.includes(ov));
+              updateField('oppositeVirtues', [...teologales, ...cardinales, ...v]);
+            }}
+            allowCustom
+            sheetTitle="Virtudes morales anexas"
+          />
+        </section>
+        
         {/* Other characteristics */}
         <section className="space-y-4">
           <h2 className="text-ios-headline text-foreground">Características</h2>
-          
-          <MultiSelect
-            label="Virtudes opuestas"
-            options={DEFAULT_OPPOSITE_VIRTUES.map(v => ({ value: v, label: v }))}
-            selected={sin.oppositeVirtues}
-            onChange={(v) => updateField('oppositeVirtues', v)}
-            allowCustom
-          />
           
           <MultiSelect
             label="Pecado capital"
@@ -332,11 +529,21 @@ export function SinEditPage() {
             onChange={(v) => updateField('vows', v)}
           />
           
-          <MultiSelect
-            label="Aspectos espirituales"
-            options={DEFAULT_SPIRITUAL_ASPECTS.map(v => ({ value: v, label: v }))}
+          <ExpandableMultiSelect
+            label="Medios espirituales"
+            initialOptions={DEFAULT_SPIRITUAL_MEANS.slice(0, 10)}
+            allOptions={DEFAULT_SPIRITUAL_MEANS}
             selected={sin.spiritualAspects}
             onChange={(v) => updateField('spiritualAspects', v)}
+            allowCustom
+            sheetTitle="Medios espirituales"
+          />
+          
+          <MultiSelect
+            label="Condicionantes"
+            options={DEFAULT_CONDICIONANTES.map(v => ({ value: v, label: v }))}
+            selected={sin.condicionantes}
+            onChange={(v) => updateField('condicionantes', v)}
             allowCustom
           />
           
@@ -387,13 +594,6 @@ export function SinEditPage() {
               <label className="text-ios-caption text-muted-foreground uppercase tracking-wide">
                 Actividades asociadas
               </label>
-              <button
-                type="button"
-                onClick={() => {/* TODO: navigate to create activity */}}
-                className="text-accent text-ios-caption flex items-center gap-1"
-              >
-                <Plus className="w-3 h-3" /> Nueva
-              </button>
             </div>
             <div className="flex flex-wrap gap-2">
               {activities.map(a => (
@@ -566,10 +766,7 @@ export function SinEditPage() {
         {/* Alternative save button */}
         <button
           type="button"
-          onClick={() => {
-            console.log('[SinEditPage] Alternative save button clicked');
-            handleSave();
-          }}
+          onClick={handleSave}
           disabled={!sin.name.trim()}
           className="w-full py-4 bg-accent text-accent-foreground rounded-xl text-ios-body font-medium flex items-center justify-center gap-2 active:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -588,6 +785,35 @@ export function SinEditPage() {
           </button>
         )}
       </div>
+      
+      {/* Materia Info Dialog */}
+      <Dialog open={showMateriaInfo} onOpenChange={setShowMateriaInfo}>
+        <DialogContent className="bg-popover">
+          <DialogHeader>
+            <DialogTitle>Tipo de materia</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 text-ios-body text-foreground">
+            <div>
+              <p className="font-semibold">Grave ex toto</p>
+              <p className="text-muted-foreground text-ios-caption">
+                La materia es siempre grave, sin posibilidad de parvedad. Cualquier acto voluntario constituye materia grave.
+              </p>
+            </div>
+            <div>
+              <p className="font-semibold">Grave ex genere</p>
+              <p className="text-muted-foreground text-ios-caption">
+                Por su naturaleza es materia grave, pero admite parvedad según la cantidad o circunstancias. Ej: hurto de cantidad pequeña.
+              </p>
+            </div>
+            <div>
+              <p className="font-semibold">Venial de propio género</p>
+              <p className="text-muted-foreground text-ios-caption">
+                Por su naturaleza solo es materia leve. No puede convertirse en pecado mortal por acumulación de materia.
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
