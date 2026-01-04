@@ -1,10 +1,9 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { IOSHeader } from "./IOSHeader";
 import { SinCard } from "./examination/SinCard";
 import { AddFreeformSinSheet } from "./examination/AddFreeformSinSheet";
 import { ResponsibilitySheet } from "./examination/ResponsibilitySheet";
-import { DeleteSinDialog } from "./examination/DeleteSinDialog";
 import { 
   createExamSession, 
   addSinEvent, 
@@ -12,13 +11,15 @@ import {
   removeSinEvent,
   completeExamSession,
   addFreeformSin,
-  getExamSession
+  getExamSession,
+  getExamSessions
 } from "@/lib/examSessions";
-import { getSins, deleteSin, createSin } from "@/lib/sins.storage";
+import { getSins, createSin } from "@/lib/sins.storage";
 import { Check, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Sin, Term } from "@/lib/sins.types";
+import type { Sin, Term, ResetCycle } from "@/lib/sins.types";
 import type { SinEvent } from "@/lib/types";
+import { toast } from "sonner";
 
 interface ExaminationFlowProps {
   personTypes: string[];
@@ -41,6 +42,72 @@ const TERM_LABELS: Record<Term, { icon: string; label: string }> = {
 interface SinState {
   attention: 'deliberado' | 'semideliberado';
   motive: 'fragilidad' | 'malicia' | 'ignorancia';
+}
+
+// Calculate if a reset cycle has elapsed
+function shouldResetCount(sin: Sin, lastEventTime: number | null): boolean {
+  if (!lastEventTime) return false;
+  if (sin.resetCycle === 'no') return false;
+  
+  const now = Date.now();
+  const elapsed = now - lastEventTime;
+  
+  switch (sin.resetCycle) {
+    case 'diario':
+      // Check if we crossed midnight
+      const lastDate = new Date(lastEventTime).toDateString();
+      const nowDate = new Date(now).toDateString();
+      return lastDate !== nowDate;
+    case 'semanal':
+      return elapsed >= 7 * 24 * 60 * 60 * 1000;
+    case 'mensual':
+      return elapsed >= 30 * 24 * 60 * 60 * 1000;
+    case 'anual':
+      return elapsed >= 365 * 24 * 60 * 60 * 1000;
+    case 'personalizado':
+      if (sin.customResetRule) {
+        const { type, value } = sin.customResetRule;
+        let thresholdMs = 0;
+        switch (type) {
+          case 'days': thresholdMs = value * 24 * 60 * 60 * 1000; break;
+          case 'weeks': thresholdMs = value * 7 * 24 * 60 * 60 * 1000; break;
+          case 'months': thresholdMs = value * 30 * 24 * 60 * 60 * 1000; break;
+        }
+        return elapsed >= thresholdMs;
+      }
+      return false;
+    default:
+      return false;
+  }
+}
+
+// Get persisted count for a sin from all sessions
+function getPersistedCount(sinId: string, sin: Sin): { count: number; lastEventTime: number | null } {
+  const sessions = getExamSessions();
+  let count = 0;
+  let lastEventTime: number | null = null;
+  
+  // Gather all events for this sin from completed sessions
+  for (const session of sessions) {
+    if (!session.endedAt) continue; // Skip incomplete sessions
+    
+    for (const event of session.events) {
+      if (event.sinId === sinId) {
+        // Track the most recent event time
+        if (!lastEventTime || event.timestamp > lastEventTime) {
+          lastEventTime = event.timestamp;
+        }
+        count += event.countIncrement;
+      }
+    }
+  }
+  
+  // Check if reset cycle has elapsed
+  if (shouldResetCount(sin, lastEventTime)) {
+    return { count: 0, lastEventTime: null };
+  }
+  
+  return { count, lastEventTime };
 }
 
 export function ExaminationFlow({ 
@@ -86,8 +153,26 @@ export function ExaminationFlow({
     return session.id;
   });
   
-  // Track events per sin (for count display)
-  const [sinCounts, setSinCounts] = useState<Record<string, number>>({});
+  // Track events per sin (for count display) - initialize with persisted counts
+  const [sinCounts, setSinCounts] = useState<Record<string, number>>(() => {
+    const initialCounts: Record<string, number> = {};
+    const sins = getSins();
+    
+    for (const sinId of sinsToShow) {
+      const sin = sins.find(s => s.id === sinId);
+      if (sin) {
+        const { count } = getPersistedCount(sinId, sin);
+        if (count > 0) {
+          initialCounts[sinId] = count;
+        }
+      }
+    }
+    
+    return initialCounts;
+  });
+  
+  // Track session-specific counts (for discount functionality)
+  const [sessionCounts, setSessionCounts] = useState<Record<string, number>>({});
   
   // Track sin states (attention/motive settings)
   const [sinStates, setSinStates] = useState<Record<string, SinState>>({});
@@ -96,10 +181,6 @@ export function ExaminationFlow({
   const [isSaving, setIsSaving] = useState(false);
   const [showFreeformSheet, setShowFreeformSheet] = useState(false);
   const [showResponsibilitySheet, setShowResponsibilitySheet] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; sin: Sin | null }>({ 
-    open: false, 
-    sin: null 
-  });
   
   // Get current session events
   const getCurrentEvents = useCallback((): SinEvent[] => {
@@ -125,7 +206,43 @@ export function ExaminationFlow({
       ...prev,
       [sinId]: (prev[sinId] || 0) + 1,
     }));
+    
+    setSessionCounts(prev => ({
+      ...prev,
+      [sinId]: (prev[sinId] || 0) + 1,
+    }));
   }, [sessionId, getSinState]);
+  
+  // Handle discount (remove last event for this sin in current session)
+  const handleDiscount = useCallback((sinId: string) => {
+    const sessionCount = sessionCounts[sinId] || 0;
+    
+    if (sessionCount === 0) {
+      toast.info("No hay marcas en esta sesión para descontar");
+      return;
+    }
+    
+    // Find and remove the last event for this sin in current session
+    const events = getCurrentEvents();
+    const sinEvents = events.filter(e => e.sinId === sinId);
+    
+    if (sinEvents.length > 0) {
+      const lastEvent = sinEvents[sinEvents.length - 1];
+      removeSinEvent(sessionId, lastEvent.id);
+      
+      setSinCounts(prev => ({
+        ...prev,
+        [sinId]: Math.max(0, (prev[sinId] || 0) - 1),
+      }));
+      
+      setSessionCounts(prev => ({
+        ...prev,
+        [sinId]: Math.max(0, (prev[sinId] || 0) - 1),
+      }));
+      
+      toast.success("Marca descontada");
+    }
+  }, [sessionId, sessionCounts, getCurrentEvents]);
   
   // Update attention for a sin
   const handleAttentionChange = useCallback((sinId: string, attention: 'deliberado' | 'semideliberado') => {
@@ -147,32 +264,6 @@ export function ExaminationFlow({
   const handleEdit = useCallback((sinId: string) => {
     navigate(`/sins/${sinId}`);
   }, [navigate]);
-  
-  // Handle delete
-  const handleDeleteConfirm = useCallback(() => {
-    if (!deleteDialog.sin) return;
-    
-    const sinId = deleteDialog.sin.id;
-    
-    // Remove any events for this sin from the session
-    const events = getCurrentEvents();
-    events.filter(e => e.sinId === sinId).forEach(e => {
-      removeSinEvent(sessionId, e.id);
-    });
-    
-    // Delete from catalog
-    deleteSin(sinId);
-    
-    // Update local state
-    setAllSins(getSins());
-    setSinCounts(prev => {
-      const next = { ...prev };
-      delete next[sinId];
-      return next;
-    });
-    
-    setDeleteDialog({ open: false, sin: null });
-  }, [deleteDialog.sin, sessionId, getCurrentEvents]);
   
   // Handle freeform sin addition
   const handleAddFreeform = useCallback((text: string, term: Term, addToCatalog: boolean) => {
@@ -228,7 +319,7 @@ export function ExaminationFlow({
     }, 400);
   }, [sessionId, onComplete]);
   
-  const markedCount = Object.values(sinCounts).reduce((sum, c) => sum + c, 0);
+  const markedCount = Object.values(sessionCounts).reduce((sum, c) => sum + c, 0);
   
   // Build subtitle showing context
   const contextParts: string[] = [];
@@ -246,7 +337,7 @@ export function ExaminationFlow({
         onBack={onBack}
       />
       
-      <div className="flex-1 px-4 py-4 space-y-6 animate-fade-in overflow-auto pb-32">
+      <div className="flex-1 px-4 py-4 space-y-6 animate-fade-in overflow-auto pb-40">
         <p className="text-ios-footnote text-muted-foreground text-center">
           Toca para marcar • Mantén presionado para opciones • Borde izquierdo para descripción
         </p>
@@ -289,10 +380,10 @@ export function ExaminationFlow({
                         attention={getSinState(sin.id).attention}
                         motive={getSinState(sin.id).motive}
                         onTap={() => handleTap(sin.id)}
+                        onDiscount={() => handleDiscount(sin.id)}
                         onAttentionChange={(att) => handleAttentionChange(sin.id, att)}
                         onMotiveChange={(mot) => handleMotiveChange(sin.id, mot)}
                         onEdit={() => handleEdit(sin.id)}
-                        onDelete={() => setDeleteDialog({ open: true, sin })}
                       />
                     </div>
                   ))}
@@ -303,9 +394,9 @@ export function ExaminationFlow({
         )}
       </div>
       
-      {/* Bottom actions */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent pt-8 safe-bottom">
-        <div className="flex gap-3">
+      {/* Bottom actions - increased bottom padding for safe area */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-background via-background to-transparent pt-8 safe-bottom">
+        <div className="flex gap-3 mb-4">
           {/* Add freeform sin button */}
           <button
             onClick={() => setShowFreeformSheet(true)}
@@ -361,14 +452,6 @@ export function ExaminationFlow({
         sins={allSins}
         onUpdateEvent={handleUpdateResponsibility}
         onConfirm={handleConfirmSave}
-      />
-      
-      {/* Delete confirmation dialog */}
-      <DeleteSinDialog
-        open={deleteDialog.open}
-        sinName={deleteDialog.sin?.name || ''}
-        onClose={() => setDeleteDialog({ open: false, sin: null })}
-        onConfirm={handleDeleteConfirm}
       />
     </div>
   );

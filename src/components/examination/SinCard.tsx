@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Check, ChevronDown, ChevronUp, MoreVertical } from "lucide-react";
+import { ChevronDown, ChevronUp, MoreVertical, Minus, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Sin } from "@/lib/sins.types";
 import { getLevelColor } from "@/lib/sins.types";
@@ -7,7 +7,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -17,10 +16,10 @@ interface SinCardProps {
   attention: 'deliberado' | 'semideliberado';
   motive: 'fragilidad' | 'malicia' | 'ignorancia';
   onTap: () => void;
+  onDiscount: () => void;
   onAttentionChange: (attention: 'deliberado' | 'semideliberado') => void;
   onMotiveChange: (motive: 'fragilidad' | 'malicia' | 'ignorancia') => void;
   onEdit: () => void;
-  onDelete: () => void;
 }
 
 export function SinCard({
@@ -29,10 +28,10 @@ export function SinCard({
   attention,
   motive,
   onTap,
+  onDiscount,
   onAttentionChange,
   onMotiveChange,
   onEdit,
-  onDelete,
 }: SinCardProps) {
   const [showDescription, setShowDescription] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
@@ -171,7 +170,7 @@ export function SinCard({
           )}
         </button>
 
-        {/* Long press context menu */}
+        {/* Three dots context menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -181,16 +180,18 @@ export function SinCard({
               <MoreVertical className="w-4 h-4" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={onEdit}>
-              Editar pecado
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
+          <DropdownMenuContent align="end" className="w-48 bg-popover">
             <DropdownMenuItem 
-              onClick={onDelete}
-              className="text-destructive focus:text-destructive"
+              onClick={onDiscount}
+              disabled={count === 0}
+              className={count === 0 ? "opacity-50" : ""}
             >
-              Eliminar
+              <Minus className="w-4 h-4 mr-2" />
+              Descontar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil className="w-4 h-4 mr-2" />
+              Editar pecado
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
