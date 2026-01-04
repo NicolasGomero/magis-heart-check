@@ -51,10 +51,10 @@ export function ContextSelector({ onGenerate }: ContextSelectorProps) {
     <div className="flex flex-col pb-24">
       {step === 'persons' && (
         <>
-          {/* PersonTypes Section */}
+          {/* Prójimo implicado Section */}
           <div className="px-4 py-2">
-            <p className="text-ios-footnote text-muted-foreground uppercase tracking-wide">
-              ¿Con qué personas has interactuado?
+            <p className="text-ios-footnote text-muted-foreground uppercase tracking-wide text-center">
+              ¿Con qué prójimo has interactuado?
             </p>
           </div>
           
@@ -107,12 +107,12 @@ export function ContextSelector({ onGenerate }: ContextSelectorProps) {
             className="flex items-center gap-1 px-4 py-2 text-primary active:opacity-70 transition-opacity self-start"
           >
             <ChevronLeft className="w-5 h-5" />
-            <span className="text-ios-body">Personas</span>
+            <span className="text-ios-body">Prójimo</span>
           </button>
 
           {/* Activities Section */}
           <div className="px-4 py-2">
-            <p className="text-ios-footnote text-muted-foreground uppercase tracking-wide">
+            <p className="text-ios-footnote text-muted-foreground uppercase tracking-wide text-center">
               ¿Qué actividades has realizado?
             </p>
           </div>
