@@ -16,14 +16,14 @@ const STORAGE_KEYS = {
 
 const DEFAULT_PERSON_TYPES: PersonType[] = [
   { id: 'pt-1', name: '👔 Superiores', isDefault: true },
-  { id: 'pt-2', name: '🙏 Hermanos de religión', isDefault: true },
+  { id: 'pt-2', name: '🙏 Hermanos de comunidad', isDefault: true },
   { id: 'pt-3', name: '👨‍👩‍👧‍👦 Familiares', isDefault: true },
+  { id: 'pt-9', name: '💼 Compañeros de trabajo', isDefault: true },
   { id: 'pt-4', name: '⛪ Laicos de la pastoral', isDefault: true },
   { id: 'pt-5', name: '🤲 Necesitados', isDefault: true },
   { id: 'pt-6', name: '🤝 Amigos', isDefault: true },
   { id: 'pt-7', name: '👋 Conocidos', isDefault: true },
   { id: 'pt-8', name: '👤 Desconocidos', isDefault: true },
-  { id: 'pt-9', name: '💼 Compañeros de trabajo', isDefault: true },
 ];
 
 const DEFAULT_ACTIVITIES: Activity[] = [
@@ -38,6 +38,7 @@ const DEFAULT_ACTIVITIES: Activity[] = [
   { id: 'act-9', name: '🏃 Deporte', isDefault: true },
   { id: 'act-10', name: '🚗 Traslados', isDefault: true },
   { id: 'act-11', name: '🍽️ Comidas', isDefault: true },
+  { id: 'act-16', name: '🤝 Compartir', isDefault: true },
   { id: 'act-12', name: '📋 Planificación', isDefault: true },
   { id: 'act-13', name: '🧴 Cuidado personal', isDefault: true },
   { id: 'act-14', name: '🏠 Cargos de casa', isDefault: true },
