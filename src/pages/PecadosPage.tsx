@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
-import { Plus, ChevronRight } from "lucide-react";
+import { Plus, ChevronRight, EyeOff, Eye } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { IOSHeader } from "@/components/IOSHeader";
-import { getSins } from "@/lib/sins.storage";
+import { getSins, toggleSinDisabled } from "@/lib/sins.storage";
 import type { Sin, Term, Gravity } from "@/lib/sins.types";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +42,12 @@ export default function PecadosPage() {
     return () => window.removeEventListener('sins-updated', handleSinsUpdate);
   }, [refreshSins]);
 
+  const handleToggleDisabled = (e: React.MouseEvent, sinId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleSinDisabled(sinId);
+  };
+
   // Get primary term and gravity for display (first in arrays)
   const getPrimaryTerm = (sin: Sin): Term | null => sin.terms[0] || null;
   const getPrimaryGravity = (sin: Sin): Gravity | null => sin.gravities[0] || null;
@@ -63,48 +69,73 @@ export default function PecadosPage() {
           {sins.map((sin) => {
             const primaryTerm = getPrimaryTerm(sin);
             const primaryGravity = getPrimaryGravity(sin);
+            const isDisabled = sin.isDisabled ?? false;
             
             return (
-              <Link
+              <div
                 key={sin.id}
-                to={`/sins/${sin.id}`}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3",
                   "border-b border-border/50 last:border-b-0",
-                  "transition-colors active:bg-muted/50"
+                  isDisabled && "opacity-50"
                 )}
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-ios-body font-medium text-foreground truncate">
-                    {sin.name}
-                  </p>
-                  {sin.shortDescription && (
-                    <p className="text-ios-caption text-muted-foreground truncate">
-                      {sin.shortDescription}
-                    </p>
+                {/* Toggle disabled button */}
+                <button
+                  onClick={(e) => handleToggleDisabled(e, sin.id)}
+                  className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
+                    "transition-colors active:scale-95",
+                    isDisabled 
+                      ? "bg-muted text-muted-foreground" 
+                      : "bg-primary/10 text-primary"
                   )}
-                  <div className="flex gap-2 mt-1">
-                    {primaryTerm && (
-                      <span className={cn(
-                        "text-ios-caption2 px-2 py-0.5 rounded-full",
-                        getTermBadgeColor(primaryTerm)
-                      )}>
-                        {primaryTerm === 'contra_dios' ? 'Dios' : 
-                         primaryTerm === 'contra_projimo' ? 'Prójimo' : 'Uno mismo'}
-                      </span>
+                  aria-label={isDisabled ? "Habilitar" : "Deshabilitar"}
+                >
+                  {isDisabled ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+
+                {/* Main content - clickable link */}
+                <Link
+                  to={`/sins/${sin.id}`}
+                  className="flex-1 min-w-0 flex items-center gap-3 transition-colors active:bg-muted/50 -my-3 py-3"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-ios-body font-medium text-foreground truncate">
+                      {sin.name}
+                    </p>
+                    {sin.shortDescription && (
+                      <p className="text-ios-caption text-muted-foreground truncate">
+                        {sin.shortDescription}
+                      </p>
                     )}
-                    {primaryGravity && (
-                      <span className={cn(
-                        "text-ios-caption2 px-2 py-0.5 rounded-full",
-                        getGravityBadgeColor(primaryGravity)
-                      )}>
-                        {primaryGravity === 'mortal' ? 'Mortal' : 'Venial'}
-                      </span>
-                    )}
+                    <div className="flex gap-2 mt-1">
+                      {primaryTerm && (
+                        <span className={cn(
+                          "text-ios-caption2 px-2 py-0.5 rounded-full",
+                          getTermBadgeColor(primaryTerm)
+                        )}>
+                          {primaryTerm === 'contra_dios' ? 'Dios' : 
+                           primaryTerm === 'contra_projimo' ? 'Prójimo' : 'Uno mismo'}
+                        </span>
+                      )}
+                      {primaryGravity && (
+                        <span className={cn(
+                          "text-ios-caption2 px-2 py-0.5 rounded-full",
+                          getGravityBadgeColor(primaryGravity)
+                        )}>
+                          {primaryGravity === 'mortal' ? 'Mortal' : 'Venial'}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-              </Link>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                </Link>
+              </div>
             );
           })}
         </div>

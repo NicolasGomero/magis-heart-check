@@ -80,14 +80,15 @@ export function HomePage() {
   const timeAgo = formatTimeAgo(minutesSinceLastExam);
   
   const handleGenerate = (personTypes: string[], activities: string[]) => {
-    const allSins = getSins();
+    // Get only enabled sins (not disabled)
+    const allSins = getSins().filter(s => !s.isDisabled);
     const hasPersonTypes = personTypes.length > 0;
     const hasActivities = activities.length > 0;
     
     let sinsToShow: string[];
     
     if (!hasPersonTypes && !hasActivities) {
-      // No selection = show all sins
+      // No selection = show all enabled sins
       sinsToShow = allSins.map(s => s.id);
     } else {
       // Filter with strict AND logic

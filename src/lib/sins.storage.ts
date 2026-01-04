@@ -145,6 +145,21 @@ export function hideSinNote(sinId: string, noteId: string): boolean {
   return true;
 }
 
+// ========== Toggle Disabled ==========
+
+export function toggleSinDisabled(id: string): boolean {
+  const sins = getSins();
+  const index = sins.findIndex(s => s.id === id);
+  
+  if (index === -1) return false;
+  
+  sins[index].isDisabled = !sins[index].isDisabled;
+  sins[index].updatedAt = Date.now();
+  saveSins(sins);
+  
+  return true;
+}
+
 // ========== Filtering ==========
 
 export function getSinsByTerm(term: string): Sin[] {

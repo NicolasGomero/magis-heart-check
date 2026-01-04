@@ -182,15 +182,15 @@ export function SinEditPage() {
     
     // Navigate after a brief delay to ensure event is dispatched
     setTimeout(() => {
-      console.log('[SinEditPage] Navigating to /sins');
-      navigate("/sins");
+      console.log('[SinEditPage] Navigating to /obras/pecados');
+      navigate("/obras/pecados");
     }, 100);
   };
   
   const handleDelete = () => {
     if (!isNew && confirm('¿Eliminar este pecado?')) {
       deleteSin(id!);
-      navigate("/sins");
+      navigate("/obras/pecados");
     }
   };
   
@@ -535,6 +535,31 @@ export function SinEditPage() {
               placeholder="Dejar vacío para peso automático"
               className="w-full bg-card border border-border rounded-xl p-4 text-ios-body text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-accent/50"
             />
+          </div>
+        </section>
+        
+        {/* Disabled state */}
+        <section className="space-y-4">
+          <h2 className="text-ios-headline text-foreground">Estado</h2>
+          
+          <div className="flex items-center justify-between bg-card border border-border rounded-xl p-4">
+            <div>
+              <span className="text-ios-body text-foreground">Deshabilitado</span>
+              <p className="text-ios-caption text-muted-foreground">No aparecerá en exámenes</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => updateField('isDisabled', !sin.isDisabled)}
+              className={cn(
+                "w-12 h-7 rounded-full transition-colors relative",
+                sin.isDisabled ? "bg-destructive" : "bg-muted"
+              )}
+            >
+              <div className={cn(
+                "absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform",
+                sin.isDisabled ? "translate-x-6" : "translate-x-1"
+              )} />
+            </button>
           </div>
         </section>
         
