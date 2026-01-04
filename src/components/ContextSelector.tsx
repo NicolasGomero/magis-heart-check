@@ -52,9 +52,9 @@ export function ContextSelector({ onGenerate }: ContextSelectorProps) {
       {step === 'persons' && (
         <>
           {/* Prójimo implicado Section */}
-          <div className="px-4 py-2">
-            <p className="text-ios-footnote text-muted-foreground uppercase tracking-wide text-center">
-              ¿Con qué prójimo has interactuado?
+          <div className="px-4 py-3">
+            <p className="text-ios-footnote text-muted-foreground uppercase tracking-wide text-center font-medium">
+              ¿CON QUÉ PERSONAS HAS INTERACTUADO?
             </p>
           </div>
           
@@ -111,9 +111,9 @@ export function ContextSelector({ onGenerate }: ContextSelectorProps) {
           </button>
 
           {/* Activities Section */}
-          <div className="px-4 py-2">
-            <p className="text-ios-footnote text-muted-foreground uppercase tracking-wide text-center">
-              ¿Qué actividades has realizado?
+          <div className="px-4 py-3">
+            <p className="text-ios-footnote text-muted-foreground uppercase tracking-wide text-center font-medium">
+              ¿QUÉ ACTIVIDADES HAS REALIZADO?
             </p>
           </div>
           
