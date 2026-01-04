@@ -76,7 +76,7 @@ export function FilterBuilder({ value, onChange }: FilterBuilderProps) {
     },
     {
       key: 'personTypeIds',
-      label: 'Tipo de persona',
+      label: 'Prójimo implicado',
       options: personTypes.map(p => ({ value: p.id, label: p.name })),
     },
     {
