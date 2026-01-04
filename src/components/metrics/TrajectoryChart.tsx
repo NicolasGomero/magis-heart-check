@@ -11,18 +11,20 @@ import {
 import { TrajectoryData } from '@/lib/metricsCalculations';
 import { VariationBadge } from './VariationBadge';
 
-interface TrajectoryChartProps {
+export interface TrajectoryChartProps {
   data: TrajectoryData;
   title: string;
   color?: string;
   showVariation?: boolean;
+  showTitle?: boolean;
 }
 
 export function TrajectoryChart({ 
   data, 
   title, 
   color = 'hsl(var(--primary))',
-  showVariation = true 
+  showVariation = true,
+  showTitle = true,
 }: TrajectoryChartProps) {
   const chartData = useMemo(() => {
     return data.points.map(p => ({
@@ -39,15 +41,17 @@ export function TrajectoryChart({
 
   return (
     <div className="bg-card rounded-xl p-4 border border-border">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-ios-body font-medium text-foreground">{title}</h3>
-          <p className="text-ios-caption text-muted-foreground">
-            {data.eventCount} eventos · Score total: {data.totalScore.toFixed(1)}
-          </p>
+      {showTitle && (
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-ios-body font-medium text-foreground">{title}</h3>
+            <p className="text-ios-caption text-muted-foreground">
+              {data.eventCount} eventos · Score total: {data.totalScore.toFixed(1)}
+            </p>
+          </div>
+          {showVariation && <VariationBadge variation={data.variation} size="sm" />}
         </div>
-        {showVariation && <VariationBadge variation={data.variation} size="sm" />}
-      </div>
+      )}
 
       <div className="h-40">
         <ResponsiveContainer width="100%" height="100%">
