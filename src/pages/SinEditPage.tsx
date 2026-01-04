@@ -16,11 +16,8 @@ import {
   RESET_CYCLE_LABELS,
   VIRTUES_TEOLOGALES,
   VIRTUES_CARDINALES,
-  VIRTUES_ANEXAS_INICIAL,
-  VIRTUES_ANEXAS_COMPLETA,
   DEFAULT_CAPITAL_SINS,
   DEFAULT_VOWS,
-  DEFAULT_SPIRITUAL_MEANS,
   DEFAULT_CONDICIONANTES,
   COLOR_PALETTES,
   deduceAdmiteParvedad,
@@ -33,6 +30,8 @@ import {
   type ResetCycle,
   type Sin,
 } from "@/lib/sins.types";
+import { VIRTUDES_ANEXAS_INICIAL, ALL_VIRTUDES_ANEXAS } from "@/lib/virtudesAnexas";
+import { MEDIOS_ESPIRITUALES_INICIAL, ALL_MEDIOS_ESPIRITUALES } from "@/lib/mediosEspirituales";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -155,7 +154,7 @@ function MultiSelect<T extends string>({
   );
 }
 
-// ========== Expandable Multi-select with "Ver más" ==========
+// ========== Expandable Multi-select with "Ver más" (Sheet) ==========
 
 interface ExpandableMultiSelectProps {
   label: string;
@@ -296,6 +295,124 @@ function ExpandableMultiSelect({
           </div>
         </SheetContent>
       </Sheet>
+    </div>
+  );
+}
+
+// ========== Navigable Multi-select (navigates to dedicated page) ==========
+
+interface NavigableMultiSelectProps {
+  label: string;
+  initialOptions: string[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+  navigateTo: string;
+  allowCustom?: boolean;
+}
+
+function NavigableMultiSelect({
+  label,
+  initialOptions,
+  selected,
+  onChange,
+  navigateTo,
+  allowCustom = false,
+}: NavigableMultiSelectProps) {
+  const navigate = useNavigate();
+  const [customValue, setCustomValue] = useState('');
+  
+  const toggle = (value: string) => {
+    if (selected.includes(value)) {
+      onChange(selected.filter(v => v !== value));
+    } else {
+      onChange([...selected, value]);
+    }
+  };
+  
+  const addCustom = () => {
+    if (customValue.trim() && !selected.includes(customValue.trim())) {
+      onChange([...selected, customValue.trim()]);
+      setCustomValue('');
+    }
+  };
+  
+  const handleNavigate = () => {
+    navigate(navigateTo, { 
+      state: { 
+        selected,
+        onSelect: (newSelected: string[]) => {
+          onChange(newSelected);
+        }
+      }
+    });
+  };
+  
+  // Show first 10 of initial options
+  const visibleOptions = initialOptions.slice(0, 10);
+  
+  return (
+    <div>
+      <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
+        {label}
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {visibleOptions.map(opt => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => toggle(opt)}
+            className={cn(
+              "py-1.5 px-3 rounded-full text-ios-subhead transition-colors",
+              selected.includes(opt)
+                ? "bg-accent text-accent-foreground"
+                : "bg-card border border-border text-foreground active:bg-muted/50"
+            )}
+          >
+            {opt}
+          </button>
+        ))}
+        {/* Show selected values not in visible options */}
+        {selected
+          .filter(v => !visibleOptions.includes(v))
+          .map(v => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => toggle(v)}
+              className="py-1.5 px-3 rounded-full text-ios-subhead bg-accent text-accent-foreground"
+            >
+              {v}
+            </button>
+          ))}
+      </div>
+      
+      <button
+        type="button"
+        onClick={handleNavigate}
+        className="flex items-center gap-1 mt-2 text-primary text-ios-caption"
+      >
+        Ver más <ChevronRight className="w-3 h-3" />
+      </button>
+      
+      {allowCustom && (
+        <div className="flex gap-2 mt-2">
+          <input
+            type="text"
+            value={customValue}
+            onChange={(e) => setCustomValue(e.target.value)}
+            placeholder="Añadir nuevo..."
+            className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-ios-subhead text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-accent/50"
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustom())}
+          />
+          <button
+            type="button"
+            onClick={addCustom}
+            className="px-3 py-2 bg-accent text-accent-foreground rounded-lg"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -494,10 +611,9 @@ export function SinEditPage() {
             }}
           />
           
-          <ExpandableMultiSelect
+          <NavigableMultiSelect
             label="Virtud moral anexa"
-            initialOptions={VIRTUES_ANEXAS_INICIAL}
-            allOptions={VIRTUES_ANEXAS_COMPLETA}
+            initialOptions={VIRTUDES_ANEXAS_INICIAL}
             selected={sin.oppositeVirtues.filter(v => 
               !VIRTUES_TEOLOGALES.includes(v) && !VIRTUES_CARDINALES.includes(v)
             )}
@@ -506,8 +622,8 @@ export function SinEditPage() {
               const cardinales = sin.oppositeVirtues.filter(ov => VIRTUES_CARDINALES.includes(ov));
               updateField('oppositeVirtues', [...teologales, ...cardinales, ...v]);
             }}
+            navigateTo="/virtudes-anexas"
             allowCustom
-            sheetTitle="Virtudes morales anexas"
           />
         </section>
         
@@ -529,14 +645,13 @@ export function SinEditPage() {
             onChange={(v) => updateField('vows', v)}
           />
           
-          <ExpandableMultiSelect
+          <NavigableMultiSelect
             label="Medios espirituales"
-            initialOptions={DEFAULT_SPIRITUAL_MEANS.slice(0, 10)}
-            allOptions={DEFAULT_SPIRITUAL_MEANS}
+            initialOptions={MEDIOS_ESPIRITUALES_INICIAL}
             selected={sin.spiritualAspects}
             onChange={(v) => updateField('spiritualAspects', v)}
+            navigateTo="/medios-espirituales"
             allowCustom
-            sheetTitle="Medios espirituales"
           />
           
           <MultiSelect

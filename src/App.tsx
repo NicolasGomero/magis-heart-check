@@ -16,6 +16,8 @@ import BuenaObraEditPage from "@/pages/BuenaObraEditPage";
 import BuenaObraDetallePage from "@/pages/BuenaObraDetallePage";
 import ImportPage from "@/pages/ImportPage";
 import BackupPage from "@/pages/BackupPage";
+import VirtudesAnexasPage from "@/pages/VirtudesAnexasPage";
+import MediosEspiritualesPage from "@/pages/MediosEspiritualesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +51,8 @@ const App = () => (
           <Route path="/settings/backup" element={<BackupPage />} />
           <Route path="/sins/new" element={<SinEditPage />} />
           <Route path="/sins/:id" element={<SinEditPage />} />
+          <Route path="/virtudes-anexas" element={<VirtudesAnexasPage />} />
+          <Route path="/medios-espirituales" element={<MediosEspiritualesPage />} />
           
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
