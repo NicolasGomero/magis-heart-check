@@ -1,12 +1,10 @@
-import { List, BarChart3, Plus, ClipboardCheck } from "lucide-react";
+import { List, TrendingUp } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { to: "/", icon: ClipboardCheck, label: "Examen" },
-  { to: "/sins", icon: List, label: "Pecados" },
-  { to: "/metrics", icon: BarChart3, label: "Métricas" },
-  { to: "/sins/new", icon: Plus, label: "Añadir" },
+  { to: "/obras", icon: List, label: "Obras" },
+  { to: "/avance", icon: TrendingUp, label: "Avance" },
 ] as const;
 
 export function BottomNavBar() {
@@ -17,7 +15,7 @@ export function BottomNavBar() {
           <NavLink
             key={to}
             to={to}
-            end={to === "/"}
+            end={to === "/obras"}
             className="flex flex-col items-center justify-center flex-1 h-full touch-target"
           >
             {({ isActive }) => (
