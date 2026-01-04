@@ -42,7 +42,14 @@ function saveSins(sins: Sin[]): void {
 
 export function getSin(id: string): Sin | null {
   const sins = getSins();
-  return sins.find(s => s.id === id) || null;
+  const found = sins.find(s => s.id === id);
+  if (!found) return null;
+  
+  // Merge with defaults to ensure all fields exist (handles old sins missing new fields)
+  return {
+    ...createDefaultSin(found.id),
+    ...found,
+  };
 }
 
 export function createSin(data: Partial<Sin>): Sin {
