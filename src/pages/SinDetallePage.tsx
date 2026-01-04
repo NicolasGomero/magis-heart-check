@@ -10,9 +10,9 @@ import { getSins } from "@/lib/sins.storage";
 import { getPersonTypes, getActivities } from "@/lib/entities";
 import { 
   getPeriodConfig, 
-  calculateTrajectory,
+  calculateSinTrajectory,
   type PeriodConfig,
-  type EnrichedEvent,
+  type EnrichedSinEvent,
   type TrajectoryData,
   type VariationResult,
 } from "@/lib/metricsCalculations";
@@ -29,9 +29,9 @@ interface CharacteristicData {
   variation: VariationResult | null;
 }
 
-function enrichEventsForSin(sessions: ExamSession[], sins: Sin[]): EnrichedEvent[] {
+function enrichEventsForSin(sessions: ExamSession[], sins: Sin[]): EnrichedSinEvent[] {
   const sinMap = new Map(sins.map(s => [s.id, s]));
-  const enriched: EnrichedEvent[] = [];
+  const enriched: EnrichedSinEvent[] = [];
   
   for (const session of sessions) {
     for (const event of session.events) {
@@ -103,7 +103,7 @@ export default function SinDetallePage() {
     const previousSinEvents = previousAllEnrichedEvents.filter(e => e.sin.id === sin.id);
     
     // Calculate trajectory for this sin
-    const trajectory = calculateTrajectory(sinEvents, periodConfig, previousSinEvents);
+    const trajectory = calculateSinTrajectory(sinEvents, periodConfig, previousSinEvents);
     
     // Calculate characteristics breakdown
     const characteristics: CharacteristicData[] = [];

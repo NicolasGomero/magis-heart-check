@@ -1,15 +1,23 @@
-import { CheckCircle2, XCircle, Info } from 'lucide-react';
+import { useState } from 'react';
+import { CheckCircle2, XCircle, Info, ChevronDown, ChevronUp, TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PeriodGrade } from '@/lib/metricsCalculations';
+import { PeriodGrade, ItemDetail } from '@/lib/metricsCalculations';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 interface PeriodGradeCardProps {
   grade: PeriodGrade;
 }
 
 export function PeriodGradeCard({ grade }: PeriodGradeCardProps) {
+  const [showDetail, setShowDetail] = useState(false);
+  
   const gradeColor = grade.passed
-    ? grade.grade >= 16 ? 'text-green-500' : 'text-emerald-400'
-    : grade.grade <= 5 ? 'text-red-500' : 'text-orange-500';
+    ? grade.grade >= 8 ? 'text-green-500' : 'text-emerald-400'
+    : grade.grade <= 3 ? 'text-red-500' : 'text-orange-500';
 
   return (
     <div className="bg-card rounded-2xl p-6 border border-border">
@@ -26,7 +34,7 @@ export function PeriodGradeCard({ grade }: PeriodGradeCardProps) {
               <span className={cn("text-3xl font-bold", gradeColor)}>
                 {grade.grade.toFixed(1)}
               </span>
-              <span className="text-lg text-muted-foreground">/20</span>
+              <span className="text-lg text-muted-foreground">/10</span>
             </div>
           </div>
         </div>
@@ -40,14 +48,88 @@ export function PeriodGradeCard({ grade }: PeriodGradeCardProps) {
         </div>
       </div>
 
+      {/* Points summary */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="bg-green-500/10 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp className="h-4 w-4 text-green-500" />
+            <span className="text-ios-caption text-green-600 dark:text-green-400">Buenas obras</span>
+          </div>
+          <span className="text-xl font-semibold text-green-600 dark:text-green-400">
+            +{grade.positivePoints.toFixed(1)}
+          </span>
+        </div>
+        <div className="bg-red-500/10 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingDown className="h-4 w-4 text-red-500" />
+            <span className="text-ios-caption text-red-600 dark:text-red-400">Pecados</span>
+          </div>
+          <span className="text-xl font-semibold text-red-600 dark:text-red-400">
+            -{grade.negativePoints.toFixed(1)}
+          </span>
+        </div>
+      </div>
+
       <p className="text-ios-subhead text-muted-foreground mb-4">
         {grade.explanation}
       </p>
 
-      <div className="flex items-start gap-2 p-3 bg-muted/30 rounded-lg">
+      {/* Ver detalle */}
+      <Collapsible open={showDetail} onOpenChange={setShowDetail}>
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
+            <span className="text-ios-body font-medium text-foreground">Ver detalle</span>
+            {showDetail ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="mt-3 space-y-4">
+            {/* Buenas obras detail */}
+            {grade.buenasObrasDetail.length > 0 && (
+              <div>
+                <h4 className="text-ios-caption text-green-600 dark:text-green-400 font-medium mb-2">
+                  Buenas obras ({grade.buenasObrasDetail.length})
+                </h4>
+                <div className="space-y-2">
+                  {grade.buenasObrasDetail.map((item) => (
+                    <ItemDetailRow key={item.id} item={item} type="positive" />
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Pecados detail */}
+            {grade.pecadosDetail.length > 0 && (
+              <div>
+                <h4 className="text-ios-caption text-red-600 dark:text-red-400 font-medium mb-2">
+                  Pecados ({grade.pecadosDetail.length})
+                </h4>
+                <div className="space-y-2">
+                  {grade.pecadosDetail.map((item) => (
+                    <ItemDetailRow key={item.id} item={item} type="negative" />
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {grade.buenasObrasDetail.length === 0 && grade.pecadosDetail.length === 0 && (
+              <p className="text-ios-caption text-muted-foreground text-center py-4">
+                No hay datos para mostrar
+              </p>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      <div className="flex items-start gap-2 p-3 bg-muted/30 rounded-lg mt-4">
         <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
         <p className="text-ios-caption text-muted-foreground">
-          No se desaprueba salvo pecado mortal en el periodo o acumulación que alcance materia grave.
+          La nota parte de 10. Los puntos negativos restan; los positivos solo suman si hubo descuentos. 
+          Con pecado mortal imputable, máximo 4.9.
         </p>
       </div>
 
@@ -62,10 +144,27 @@ export function PeriodGradeCard({ grade }: PeriodGradeCardProps) {
           <p className="text-ios-caption text-muted-foreground">Acumulaciones</p>
         </div>
         <div className="text-center">
-          <p className="text-lg font-semibold text-foreground">{grade.venialLoad.toFixed(0)}</p>
-          <p className="text-ios-caption text-muted-foreground">Carga venial</p>
+          <p className="text-lg font-semibold text-foreground">{grade.negativePoints.toFixed(0)}</p>
+          <p className="text-ios-caption text-muted-foreground">Pts negativos</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ItemDetailRow({ item, type }: { item: ItemDetail; type: 'positive' | 'negative' }) {
+  return (
+    <div className="flex items-center justify-between py-2 px-3 bg-background rounded-lg">
+      <div className="flex items-center gap-2">
+        <span className="text-ios-body text-foreground">{item.name}</span>
+        <span className="text-ios-caption text-muted-foreground">×{item.count}</span>
+      </div>
+      <span className={cn(
+        "text-ios-body font-medium",
+        type === 'positive' ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+      )}>
+        {type === 'positive' ? '+' : '-'}{item.points.toFixed(1)}
+      </span>
     </div>
   );
 }

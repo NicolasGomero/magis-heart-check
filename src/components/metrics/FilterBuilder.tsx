@@ -7,23 +7,37 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { 
-  MetricFilter,
-} from '@/lib/metricsCalculations';
+import { MetricFilter } from '@/lib/metricsCalculations';
 import { 
   Term, 
   Gravity, 
   Manifestation, 
   Mode,
+  MateriaTipo,
   TERM_LABELS,
   GRAVITY_LABELS,
   MANIFESTATION_LABELS,
   MODE_LABELS,
+  MATERIA_TIPO_LABELS,
   DEFAULT_CAPITAL_SINS,
+  VIRTUES_TEOLOGALES,
+  VIRTUES_CARDINALES,
+  VIRTUES_ANEXAS_INICIAL,
+  DEFAULT_VOWS,
+  DEFAULT_SPIRITUAL_MEANS,
+  DEFAULT_CONDICIONANTES,
 } from '@/lib/sins.types';
-import { getSins } from '@/lib/sins.storage';
+import { 
+  PurityOfIntention, 
+  CharityLevel, 
+  Quality, 
+  Circunstancias,
+  PURITY_LABELS,
+  CHARITY_LABELS,
+  QUALITY_LABELS,
+  CIRCUNSTANCIAS_LABELS,
+} from '@/lib/buenasObras.types';
 import { getPersonTypes, getActivities } from '@/lib/entities';
 
 interface FilterBuilderProps {
@@ -37,12 +51,23 @@ interface FilterSection {
   options: { value: string; label: string }[];
 }
 
+const ATTENTION_LABELS: Record<string, string> = {
+  deliberado: 'Deliberado',
+  semideliberado: 'Semideliberado',
+};
+
+const MOTIVE_LABELS: Record<string, string> = {
+  fragilidad: 'Fragilidad',
+  malicia: 'Malicia',
+  ignorancia: 'Ignorancia',
+};
+
 export function FilterBuilder({ value, onChange }: FilterBuilderProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const sins = getSins();
   const personTypes = getPersonTypes();
   const activities = getActivities();
 
+  // Dimensions in specified order (excluding "Pecado específico" from filters)
   const sections: FilterSection[] = [
     {
       key: 'terms',
@@ -50,9 +75,64 @@ export function FilterBuilder({ value, onChange }: FilterBuilderProps) {
       options: Object.entries(TERM_LABELS).map(([v, l]) => ({ value: v, label: l })),
     },
     {
+      key: 'personTypeIds',
+      label: 'Prójimo implicado',
+      options: personTypes.map(p => ({ value: p.id, label: p.name })),
+    },
+    {
       key: 'gravities',
       label: 'Gravedad',
       options: Object.entries(GRAVITY_LABELS).map(([v, l]) => ({ value: v, label: l })),
+    },
+    {
+      key: 'capitalSins',
+      label: 'Pecado capital',
+      options: DEFAULT_CAPITAL_SINS.map(c => ({ value: c, label: c })),
+    },
+    {
+      key: 'virtudesTeologales',
+      label: 'Virtud teologal',
+      options: VIRTUES_TEOLOGALES.map(v => ({ value: v, label: v })),
+    },
+    {
+      key: 'virtudesCardinales',
+      label: 'Virtud moral cardinal',
+      options: VIRTUES_CARDINALES.map(v => ({ value: v, label: v })),
+    },
+    {
+      key: 'virtudesAnexas',
+      label: 'Virtud moral anexa',
+      options: VIRTUES_ANEXAS_INICIAL.map(v => ({ value: v, label: v })),
+    },
+    {
+      key: 'vows',
+      label: 'Voto',
+      options: DEFAULT_VOWS.map(v => ({ value: v, label: v })),
+    },
+    {
+      key: 'activityIds',
+      label: 'Actividad',
+      options: activities.map(a => ({ value: a.id, label: a.name })),
+    },
+    {
+      key: 'attentions',
+      label: 'Atención',
+      options: Object.entries(ATTENTION_LABELS).map(([v, l]) => ({ value: v, label: l })),
+    },
+    {
+      key: 'motives',
+      label: 'Motivo',
+      options: Object.entries(MOTIVE_LABELS).map(([v, l]) => ({ value: v, label: l })),
+    },
+    {
+      key: 'materiaTipos',
+      label: 'Tipo de materia',
+      options: Object.entries(MATERIA_TIPO_LABELS).map(([v, l]) => ({ value: v, label: l })),
+    },
+    {
+      key: 'purityOfIntentions',
+      label: 'Intención de la buena obra',
+      options: Object.entries(PURITY_LABELS).map(([v, l]) => ({ value: v, label: l })),
     },
     {
       key: 'manifestations',
@@ -65,24 +145,29 @@ export function FilterBuilder({ value, onChange }: FilterBuilderProps) {
       options: Object.entries(MODE_LABELS).map(([v, l]) => ({ value: v, label: l })),
     },
     {
-      key: 'capitalSins',
-      label: 'Pecado capital',
-      options: DEFAULT_CAPITAL_SINS.map(c => ({ value: c, label: c })),
+      key: 'charityLevels',
+      label: 'Caridad',
+      options: Object.entries(CHARITY_LABELS).map(([v, l]) => ({ value: v, label: l })),
     },
     {
-      key: 'sinIds',
-      label: 'Pecado específico',
-      options: sins.map(s => ({ value: s.id, label: s.name })),
+      key: 'qualities',
+      label: 'Calidad de la obra',
+      options: Object.entries(QUALITY_LABELS).map(([v, l]) => ({ value: v, label: l })),
     },
     {
-      key: 'personTypeIds',
-      label: 'Prójimo implicado',
-      options: personTypes.map(p => ({ value: p.id, label: p.name })),
+      key: 'circunstancias',
+      label: 'Circunstancias de la buena obra',
+      options: Object.entries(CIRCUNSTANCIAS_LABELS).map(([v, l]) => ({ value: v, label: l })),
     },
     {
-      key: 'activityIds',
-      label: 'Actividad',
-      options: activities.map(a => ({ value: a.id, label: a.name })),
+      key: 'condicionantes',
+      label: 'Condicionantes',
+      options: DEFAULT_CONDICIONANTES.map(c => ({ value: c, label: c })),
+    },
+    {
+      key: 'spiritualMeans',
+      label: 'Medios espirituales',
+      options: DEFAULT_SPIRITUAL_MEANS.map(m => ({ value: m, label: m })),
     },
   ];
 
