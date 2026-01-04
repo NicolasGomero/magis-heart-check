@@ -376,7 +376,7 @@ export function SinEditPage() {
           <h2 className="text-ios-headline text-foreground">Relaciones</h2>
           
           <MultiSelect
-            label="Tipos de persona involucrados"
+            label="Prójimo implicado"
             options={personTypes.map(p => ({ value: p.id, label: p.name }))}
             selected={sin.involvedPersonTypes}
             onChange={(v) => updateField('involvedPersonTypes', v)}

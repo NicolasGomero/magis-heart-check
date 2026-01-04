@@ -47,7 +47,7 @@ const MAPPABLE_FIELDS: { key: keyof ImportColumnMapping; label: string; required
   { key: 'manifestations', label: 'Manifestación (externo/interno)' },
   { key: 'objectTypes', label: 'Tipo objeto (carnal/espiritual)' },
   { key: 'modes', label: 'Modo (comisión/omisión)' },
-  { key: 'involvedPersonTypes', label: 'Tipos de persona' },
+  { key: 'involvedPersonTypes', label: 'Prójimo implicado' },
   { key: 'associatedActivities', label: 'Actividades asociadas' },
   { key: 'resetCycle', label: 'Ciclo de reseteo' },
   { key: 'colorPaletteKey', label: 'Paleta de colores' },
