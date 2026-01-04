@@ -1,8 +1,9 @@
-import { List, TrendingUp } from "lucide-react";
+import { ClipboardCheck, List, TrendingUp } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
+  { to: "/examen", icon: ClipboardCheck, label: "Examen" },
   { to: "/obras", icon: List, label: "Obras" },
   { to: "/avance", icon: TrendingUp, label: "Avance" },
 ] as const;

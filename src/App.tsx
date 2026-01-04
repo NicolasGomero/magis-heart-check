@@ -29,11 +29,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Redirect root to obras */}
-          <Route path="/" element={<Navigate to="/obras" replace />} />
+          {/* Redirect root to examen */}
+          <Route path="/" element={<Navigate to="/examen" replace />} />
           
           {/* Main layout with bottom nav */}
           <Route element={<MainLayout />}>
+            <Route path="/examen" element={<HomePage />} />
             <Route path="/obras" element={<ObrasPage />} />
             <Route path="/avance" element={<MetricsPage />} />
           </Route>
@@ -45,7 +46,6 @@ const App = () => (
           <Route path="/obras/buenas/new" element={<BuenaObraEditPage />} />
           <Route path="/obras/buenas/:id" element={<BuenaObraEditPage />} />
           <Route path="/obras/buenas/:id/detalle" element={<BuenaObraDetallePage />} />
-          <Route path="/examen" element={<HomePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/import" element={<ImportPage />} />
           <Route path="/settings/backup" element={<BackupPage />} />
