@@ -36,11 +36,35 @@ export interface SinEvent {
   motive: MotiveType;
   responsibility: ResponsibilityType;
   optionalFlags?: OptionalFlags;
+  // Condicionantes applied at the time of event
+  appliedCondicionantes?: string[];
+  condicionantesK?: number; // Number of condicionantes applied
+  condicionantesFactor?: number; // 0.80^k factor applied
+}
+
+// ========== BuenaObra Event ==========
+
+export interface BuenaObraEvent {
+  id: string;
+  buenaObraId: string;
+  timestamp: number;
+  countIncrement: number;
+  purityOfIntention?: 'actual' | 'virtual' | 'habitual';
+  // Condicionantes applied at the time of event
+  appliedCondicionantes?: string[];
+  condicionantesK?: number; // Number of condicionantes applied
+  condicionantesFactor?: number; // 1.20^k factor applied
 }
 
 // ========== Exam Session ==========
 
 export interface FreeformSin {
+  id: string;
+  text: string;
+  pillar: 'god' | 'neighbor' | 'self';
+}
+
+export interface FreeformBuenaObra {
   id: string;
   text: string;
   pillar: 'god' | 'neighbor' | 'self';
@@ -53,8 +77,11 @@ export interface ExamSession {
   selectedPersonTypes: string[]; // IDs, can be empty, 1, or many
   selectedActivities: string[]; // IDs, can be empty, 1, or many
   sinsShown: string[]; // Deduplicated list of sinIds shown
+  buenasObrasShown: string[]; // Deduplicated list of buenaObraIds shown
   events: SinEvent[];
+  buenaObraEvents: BuenaObraEvent[];
   freeformAddedSins: FreeformSin[]; // Sins added ad-hoc for this session
+  freeformAddedBuenasObras: FreeformBuenaObra[]; // Buenas obras added ad-hoc
 }
 
 // ========== User State ==========

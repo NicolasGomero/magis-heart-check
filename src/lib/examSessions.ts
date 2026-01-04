@@ -1,7 +1,7 @@
 // ExamSession storage and operations
 // Offline-first with localStorage persistence
 
-import type { ExamSession, SinEvent, FreeformSin, UserState } from './types';
+import type { ExamSession, SinEvent, BuenaObraEvent, FreeformSin, FreeformBuenaObra, UserState } from './types';
 import { generateId } from './storage';
 
 const STORAGE_KEYS = {
@@ -32,7 +32,8 @@ function saveExamSessions(sessions: ExamSession[]): void {
 export function createExamSession(
   personTypes: string[],
   activities: string[],
-  sinsShown: string[]
+  sinsShown: string[],
+  buenasObrasShown: string[] = []
 ): ExamSession {
   const session: ExamSession = {
     id: generateId(),
@@ -41,8 +42,11 @@ export function createExamSession(
     selectedPersonTypes: personTypes,
     selectedActivities: activities,
     sinsShown: [...new Set(sinsShown)], // Deduplicate
+    buenasObrasShown: [...new Set(buenasObrasShown)],
     events: [],
+    buenaObraEvents: [],
     freeformAddedSins: [],
+    freeformAddedBuenasObras: [],
   };
   
   const sessions = getExamSessions();
@@ -101,6 +105,9 @@ export function addSinEvent(
     motive: options?.motive ?? 'fragilidad',
     responsibility: options?.responsibility ?? 'formal',
     optionalFlags: options?.optionalFlags,
+    appliedCondicionantes: options?.appliedCondicionantes,
+    condicionantesK: options?.condicionantesK,
+    condicionantesFactor: options?.condicionantesFactor,
   };
   
   sessions[index].events.push(event);
