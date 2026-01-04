@@ -99,3 +99,24 @@ export function toggleBuenaObraDisabled(id: string): boolean {
   
   return true;
 }
+
+// ========== Notes Operations ==========
+
+export function addBuenaObraNote(buenaObraId: string, text: string): BuenaObraNote | null {
+  const buenasObras = getBuenasObras();
+  const index = buenasObras.findIndex(b => b.id === buenaObraId);
+  
+  if (index === -1) return null;
+  
+  const note: BuenaObraNote = {
+    noteId: generateId(),
+    text: text.trim(),
+    createdAt: Date.now(),
+  };
+  
+  buenasObras[index].notes.push(note);
+  buenasObras[index].updatedAt = Date.now();
+  saveBuenasObras(buenasObras);
+  
+  return note;
+}
