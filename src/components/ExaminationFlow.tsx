@@ -15,6 +15,7 @@ import {
   getExamSessions
 } from "@/lib/examSessions";
 import { getSins, createSin } from "@/lib/sins.storage";
+import { getPreferences, calculateCondicionantesFactor } from "@/lib/preferences";
 import { Check, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Sin, Term, ResetCycle } from "@/lib/sins.types";
@@ -196,10 +197,24 @@ export function ExaminationFlow({
   // Handle tap on sin card (register event)
   const handleTap = useCallback((sinId: string) => {
     const state = getSinState(sinId);
+    const sin = allSins.find(s => s.id === sinId);
+    
+    // Calculate condicionantes factor at event time
+    const prefs = getPreferences();
+    const condicionantesResult = sin && sin.condicionantes?.length > 0
+      ? calculateCondicionantesFactor(
+          prefs.subjectProfile.condicionantesActivos,
+          sin.condicionantes,
+          'sin'
+        )
+      : { appliedCondicionantes: [], k: 0, factor: 1.0 };
     
     addSinEvent(sessionId, sinId, {
       attention: state.attention,
       motive: state.motive,
+      appliedCondicionantes: condicionantesResult.appliedCondicionantes,
+      condicionantesK: condicionantesResult.k,
+      condicionantesFactor: condicionantesResult.factor,
     });
     
     setSinCounts(prev => ({
@@ -211,7 +226,7 @@ export function ExaminationFlow({
       ...prev,
       [sinId]: (prev[sinId] || 0) + 1,
     }));
-  }, [sessionId, getSinState]);
+  }, [sessionId, getSinState, allSins]);
   
   // Handle discount (remove last event for this sin in current session)
   const handleDiscount = useCallback((sinId: string) => {

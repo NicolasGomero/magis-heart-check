@@ -3,6 +3,7 @@
 
 import { Sin, Term, Gravity, MateriaTipo, Manifestation } from './sins.types';
 import { SinEvent, AttentionLevel, MotiveType, ResponsibilityType, OptionalFlags } from './types';
+import { getPreferences, calculateCondicionantesFactor } from './preferences';
 
 // ========== Constants ==========
 
@@ -187,6 +188,9 @@ export interface ScoreBreakdown {
   motiveFactor: number;
   responsibilityFactor: number;
   flagsFactor: number;
+  condicionantesFactor: number;
+  appliedCondicionantes: string[];
+  condicionantesK: number;
   rawScore: number;
   cappedScore: number;
   normalizedScore: number;
@@ -202,6 +206,29 @@ export function calculateEventScore(sin: Sin, event: SinEvent): ScoreBreakdown {
   const responsibilityFactor = RESPONSIBILITY_FACTORS[event.responsibility];
   const flagsFactor = calculateFlagsFactor(event.optionalFlags);
   
+  // Get condicionantes factor (use stored values if available, else calculate)
+  let condicionantesFactor = 1.0;
+  let appliedCondicionantes: string[] = [];
+  let condicionantesK = 0;
+  
+  if (event.condicionantesFactor !== undefined) {
+    // Use stored values from event
+    condicionantesFactor = event.condicionantesFactor;
+    appliedCondicionantes = event.appliedCondicionantes || [];
+    condicionantesK = event.condicionantesK || 0;
+  } else if (sin.condicionantes && sin.condicionantes.length > 0) {
+    // Calculate from current subject profile
+    const prefs = getPreferences();
+    const result = calculateCondicionantesFactor(
+      prefs.subjectProfile.condicionantesActivos,
+      sin.condicionantes,
+      'sin'
+    );
+    condicionantesFactor = result.factor;
+    appliedCondicionantes = result.appliedCondicionantes;
+    condicionantesK = result.k;
+  }
+  
   // Calculate raw score
   const rawScore = pBase 
     * termFactor 
@@ -210,7 +237,8 @@ export function calculateEventScore(sin: Sin, event: SinEvent): ScoreBreakdown {
     * attentionFactor 
     * motiveFactor 
     * responsibilityFactor 
-    * flagsFactor;
+    * flagsFactor
+    * condicionantesFactor;
   
   // Cap the raw score
   const cappedScore = Math.min(rawScore, MAX_RAW);
@@ -232,6 +260,9 @@ export function calculateEventScore(sin: Sin, event: SinEvent): ScoreBreakdown {
     motiveFactor,
     responsibilityFactor,
     flagsFactor,
+    condicionantesFactor,
+    appliedCondicionantes,
+    condicionantesK,
     rawScore,
     cappedScore,
     normalizedScore,
