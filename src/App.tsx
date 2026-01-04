@@ -11,7 +11,9 @@ import BuenasObrasPage from "@/pages/BuenasObrasPage";
 import MetricsPage from "@/pages/MetricsPage";
 import SettingsPage from "@/pages/SettingsPage";
 import SinEditPage from "@/pages/SinEditPage";
+import SinDetallePage from "@/pages/SinDetallePage";
 import BuenaObraEditPage from "@/pages/BuenaObraEditPage";
+import BuenaObraDetallePage from "@/pages/BuenaObraDetallePage";
 import ImportPage from "@/pages/ImportPage";
 import BackupPage from "@/pages/BackupPage";
 import NotFound from "./pages/NotFound";
@@ -36,9 +38,11 @@ const App = () => (
           
           {/* Internal pages without bottom nav */}
           <Route path="/obras/pecados" element={<PecadosPage />} />
+          <Route path="/obras/pecados/:id/detalle" element={<SinDetallePage />} />
           <Route path="/obras/buenas" element={<BuenasObrasPage />} />
           <Route path="/obras/buenas/new" element={<BuenaObraEditPage />} />
           <Route path="/obras/buenas/:id" element={<BuenaObraEditPage />} />
+          <Route path="/obras/buenas/:id/detalle" element={<BuenaObraDetallePage />} />
           <Route path="/examen" element={<HomePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/import" element={<ImportPage />} />
