@@ -4,6 +4,7 @@ import { IOSHeader } from "@/components/IOSHeader";
 import { PeriodSelector } from "@/components/metrics/PeriodSelector";
 import { TrajectoryChart } from "@/components/metrics/TrajectoryChart";
 import { VariationBadge } from "@/components/metrics/VariationBadge";
+import { PeriodNotes } from "@/components/metrics/PeriodNotes";
 import { getSin } from "@/lib/sins.storage";
 import { getExamSessions } from "@/lib/examSessions";
 import { getSins } from "@/lib/sins.storage";
@@ -360,6 +361,15 @@ export default function SinDetallePage() {
             </div>
           </section>
         )}
+        
+        {/* Notes Section */}
+        <PeriodNotes
+          targetId={sin.id}
+          targetType="sin"
+          startDate={periodConfig.startDate}
+          endDate={periodConfig.endDate}
+          returnPath={`/obras/pecados/${sin.id}/detalle`}
+        />
         
         {/* No data message */}
         {metricsData && metricsData.totalEvents === 0 && (

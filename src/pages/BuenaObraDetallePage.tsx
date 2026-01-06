@@ -4,6 +4,7 @@ import { IOSHeader } from "@/components/IOSHeader";
 import { PeriodSelector } from "@/components/metrics/PeriodSelector";
 import { TrajectoryChart } from "@/components/metrics/TrajectoryChart";
 import { VariationBadge } from "@/components/metrics/VariationBadge";
+import { PeriodNotes } from "@/components/metrics/PeriodNotes";
 import { getBuenaObra, getBuenasObras } from "@/lib/buenasObras.storage";
 import { getPersonTypes, getActivities } from "@/lib/entities";
 import { 
@@ -167,6 +168,15 @@ export default function BuenaObraDetallePage() {
             </div>
           </section>
         )}
+        
+        {/* Notes Section */}
+        <PeriodNotes
+          targetId={buenaObra.id}
+          targetType="goodWork"
+          startDate={periodConfig.startDate}
+          endDate={periodConfig.endDate}
+          returnPath={`/obras/buenas/${buenaObra.id}/detalle`}
+        />
         
         {/* No characteristics message */}
         {metricsData && metricsData.characteristics.length === 0 && (
