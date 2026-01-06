@@ -188,11 +188,24 @@ export function ExaminationFlow({
   // Sync sinCounts when exam sessions are updated externally (e.g., historical discount)
   useEffect(() => {
     const handleSessionsUpdated = () => {
-      const allSessions = getExamSessions();
+      const sins = getSins();
       const newCounts: Record<string, number> = {};
       
-      for (const session of allSessions) {
-        for (const event of session.events) {
+      // Recalculate using getPersistedCount (respects completed sessions + resetCycle)
+      for (const sinId of sinsToShow) {
+        const sin = sins.find(s => s.id === sinId);
+        if (sin) {
+          const { count } = getPersistedCount(sinId, sin);
+          if (count > 0) {
+            newCounts[sinId] = count;
+          }
+        }
+      }
+      
+      // Add back current session counts (not yet completed)
+      const currentSession = getExamSession(sessionId);
+      if (currentSession) {
+        for (const event of currentSession.events) {
           newCounts[event.sinId] = (newCounts[event.sinId] || 0) + 1;
         }
       }
@@ -204,7 +217,7 @@ export function ExaminationFlow({
     return () => {
       window.removeEventListener('exam-sessions-updated', handleSessionsUpdated);
     };
-  }, []);
+  }, [sinsToShow, sessionId]);
 
   // Track session-specific counts (for discount functionality)
   const [sessionCounts, setSessionCounts] = useState<Record<string, number>>({});
