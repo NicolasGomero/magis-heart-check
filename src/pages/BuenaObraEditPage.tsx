@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Plus, Trash2, ChevronRight } from "lucide-react";
 import { IOSHeader } from "@/components/IOSHeader";
 import { getBuenaObra, createBuenaObra, updateBuenaObra, deleteBuenaObra } from "@/lib/buenasObras.storage";
@@ -22,8 +22,12 @@ import {
 import { VIRTUES_TEOLOGALES, VIRTUES_CARDINALES, DEFAULT_CAPITAL_SINS, DEFAULT_VOWS } from "@/lib/sins.types";
 import { VIRTUDES_ANEXAS_PRINCIPALES } from "@/lib/virtudesAnexas";
 import { MEDIOS_ESPIRITUALES_INICIAL, ALL_MEDIOS_ESPIRITUALES } from "@/lib/mediosEspirituales";
-import { getAllCondicionantes } from "@/lib/condicionantes";
+import { SEED_CONDICIONANTES } from "@/lib/condicionantes";
 import { cn } from "@/lib/utils";
+
+// Storage keys for temporary selection persistence
+const MEDIOS_SELECTION_KEY = 'magis_medios_selection';
+const VIRTUDES_SELECTION_KEY = 'magis_virtudes_selection';
 
 // ========== Multi-select Component ==========
 
@@ -165,6 +169,7 @@ interface NavigableMultiSelectProps {
   selected: string[];
   onChange: (selected: string[]) => void;
   navigateTo: string;
+  storageKey: string;
   allowCustom?: boolean;
 }
 
@@ -174,10 +179,29 @@ function NavigableMultiSelect({
   selected,
   onChange,
   navigateTo,
+  storageKey,
   allowCustom = false,
 }: NavigableMultiSelectProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [customValue, setCustomValue] = useState('');
+  
+  // Check for updates from the selection page on mount and location changes
+  useEffect(() => {
+    const storedSelection = localStorage.getItem(storageKey);
+    if (storedSelection) {
+      try {
+        const parsed = JSON.parse(storedSelection);
+        if (Array.isArray(parsed)) {
+          onChange(parsed);
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+      // Clear the storage after reading
+      localStorage.removeItem(storageKey);
+    }
+  }, [location.pathname, storageKey]);
   
   const toggle = (value: string) => {
     if (selected.includes(value)) {
@@ -196,8 +220,8 @@ function NavigableMultiSelect({
   
   // Combine initial options with any selected values not in initial
   const allVisibleOptions = [
-    ...initialOptions,
-    ...selected.filter(s => !initialOptions.includes(s))
+    ...initialOptions.slice(0, 10),
+    ...selected.filter(s => !initialOptions.slice(0, 10).includes(s))
   ];
   
   return (
@@ -208,8 +232,8 @@ function NavigableMultiSelect({
         </label>
         <button
           type="button"
-          onClick={() => navigate(navigateTo, { state: { selected, returnPath: window.location.pathname } })}
-          className="text-accent text-ios-subhead flex items-center gap-1"
+          onClick={() => navigate(navigateTo, { state: { selected, returnPath: location.pathname } })}
+          className="text-accent text-ios-subhead flex items-center gap-1 py-2 px-3 -mr-3 active:opacity-70 transition-opacity"
         >
           Ver más
           <ChevronRight className="w-4 h-4" />
@@ -407,6 +431,7 @@ export function BuenaObraEditPage() {
           selected={buenaObra.virtudesAnexas}
           onChange={(v) => updateField('virtudesAnexas', v)}
           navigateTo="/virtudes-anexas"
+          storageKey={VIRTUDES_SELECTION_KEY}
           allowCustom
         />
         
@@ -433,6 +458,7 @@ export function BuenaObraEditPage() {
           selected={buenaObra.mediosEspirituales}
           onChange={(v) => updateField('mediosEspirituales', v)}
           navigateTo="/medios-espirituales"
+          storageKey={MEDIOS_SELECTION_KEY}
           allowCustom
         />
         
@@ -450,7 +476,7 @@ export function BuenaObraEditPage() {
         {/* 13. Condicionantes compatibles */}
         <MultiSelect
           label="CONDICIONANTES COMPATIBLES"
-          options={getAllCondicionantes().map(c => ({ value: c, label: c }))}
+          options={[...SEED_CONDICIONANTES].map(c => ({ value: c, label: c }))}
           selected={buenaObra.condicionantes}
           onChange={(v) => updateField('condicionantes', v)}
           allowCustom

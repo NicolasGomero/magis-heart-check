@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Plus, Trash2, Info, ChevronRight } from "lucide-react";
 import { IOSHeader } from "@/components/IOSHeader";
 import { getSin, createSin, updateSin, deleteSin } from "@/lib/sins.storage";
@@ -31,7 +31,7 @@ import {
 } from "@/lib/sins.types";
 import { VIRTUDES_ANEXAS_INICIAL, ALL_VIRTUDES_ANEXAS } from "@/lib/virtudesAnexas";
 import { MEDIOS_ESPIRITUALES_INICIAL, ALL_MEDIOS_ESPIRITUALES } from "@/lib/mediosEspirituales";
-import { getAllCondicionantes } from "@/lib/preferences";
+import { getAllCondicionantes, SEED_CONDICIONANTES } from "@/lib/condicionantes";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -301,12 +301,16 @@ function ExpandableMultiSelect({
 
 // ========== Navigable Multi-select (navigates to dedicated page) ==========
 
+const MEDIOS_SELECTION_KEY = 'magis_medios_selection';
+const VIRTUDES_SELECTION_KEY = 'magis_virtudes_selection';
+
 interface NavigableMultiSelectProps {
   label: string;
   initialOptions: string[];
   selected: string[];
   onChange: (selected: string[]) => void;
   navigateTo: string;
+  storageKey: string;
   allowCustom?: boolean;
 }
 
@@ -316,10 +320,29 @@ function NavigableMultiSelect({
   selected,
   onChange,
   navigateTo,
+  storageKey,
   allowCustom = false,
 }: NavigableMultiSelectProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [customValue, setCustomValue] = useState('');
+  
+  // Check for updates from the selection page on mount and location changes
+  useEffect(() => {
+    const storedSelection = localStorage.getItem(storageKey);
+    if (storedSelection) {
+      try {
+        const parsed = JSON.parse(storedSelection);
+        if (Array.isArray(parsed)) {
+          onChange(parsed);
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+      // Clear the storage after reading
+      localStorage.removeItem(storageKey);
+    }
+  }, [location.pathname, storageKey]);
   
   const toggle = (value: string) => {
     if (selected.includes(value)) {
@@ -340,9 +363,7 @@ function NavigableMultiSelect({
     navigate(navigateTo, { 
       state: { 
         selected,
-        onSelect: (newSelected: string[]) => {
-          onChange(newSelected);
-        }
+        returnPath: location.pathname
       }
     });
   };
@@ -352,9 +373,19 @@ function NavigableMultiSelect({
   
   return (
     <div>
-      <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
-        {label}
-      </label>
+      <div className="flex items-center justify-between mb-2">
+        <label className="text-ios-caption text-muted-foreground uppercase tracking-wide">
+          {label}
+        </label>
+        <button
+          type="button"
+          onClick={handleNavigate}
+          className="text-accent text-ios-subhead flex items-center gap-1 py-2 px-3 -mr-3 active:opacity-70 transition-opacity"
+        >
+          Ver más
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
       <div className="flex flex-wrap gap-2">
         {visibleOptions.map(opt => (
           <button
@@ -385,14 +416,6 @@ function NavigableMultiSelect({
             </button>
           ))}
       </div>
-      
-      <button
-        type="button"
-        onClick={handleNavigate}
-        className="flex items-center gap-1 mt-2 text-primary text-ios-caption"
-      >
-        Ver más <ChevronRight className="w-3 h-3" />
-      </button>
       
       {allowCustom && (
         <div className="flex gap-2 mt-2">
@@ -623,6 +646,7 @@ export function SinEditPage() {
               updateField('oppositeVirtues', [...teologales, ...cardinales, ...v]);
             }}
             navigateTo="/virtudes-anexas"
+            storageKey={VIRTUDES_SELECTION_KEY}
             allowCustom
           />
         </section>
@@ -651,12 +675,13 @@ export function SinEditPage() {
             selected={sin.spiritualAspects}
             onChange={(v) => updateField('spiritualAspects', v)}
             navigateTo="/medios-espirituales"
+            storageKey={MEDIOS_SELECTION_KEY}
             allowCustom
           />
           
           <MultiSelect
             label="CONDICIONANTES COMPATIBLES"
-            options={getAllCondicionantes().map(v => ({ value: v, label: v }))}
+            options={[...SEED_CONDICIONANTES].map(v => ({ value: v, label: v }))}
             selected={sin.condicionantes}
             onChange={(v) => updateField('condicionantes', v)}
             allowCustom
