@@ -39,6 +39,14 @@ export function VariationBadge({ variation, showPercentage = true, size = 'md' }
 
   const config = VARIATION_CONFIG[variation.type];
   const Icon = config.icon;
+  
+  // Format percentage with 1 decimal, avoid -0.0%
+  const formatPct = (pct: number): string => {
+    if (Math.abs(pct) < 0.05) {
+      return '0,0';
+    }
+    return pct.toFixed(1).replace('.', ',');
+  };
 
   return (
     <div className={cn(
@@ -58,7 +66,7 @@ export function VariationBadge({ variation, showPercentage = true, size = 'md' }
         {config.label}
         {showPercentage && variation.type !== 'stable' && (
           <span className="ml-1">
-            ({variation.percentage > 0 ? '+' : ''}{variation.percentage.toFixed(0)}%)
+            ({variation.percentage > 0 ? '+' : ''}{formatPct(variation.percentage)}%)
           </span>
         )}
       </span>

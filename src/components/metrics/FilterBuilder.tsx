@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Filter, X, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Filter, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -9,167 +10,42 @@ import {
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { MetricFilter } from '@/lib/metricsCalculations';
-import { 
-  Term, 
-  Gravity, 
-  Manifestation, 
-  Mode,
-  MateriaTipo,
-  TERM_LABELS,
-  GRAVITY_LABELS,
-  MANIFESTATION_LABELS,
-  MODE_LABELS,
-  MATERIA_TIPO_LABELS,
-  DEFAULT_CAPITAL_SINS,
-  VIRTUES_TEOLOGALES,
-  VIRTUES_CARDINALES,
-  VIRTUES_ANEXAS_INICIAL,
-  DEFAULT_VOWS,
-  DEFAULT_SPIRITUAL_MEANS,
-  DEFAULT_CONDICIONANTES,
-} from '@/lib/sins.types';
-import { 
-  PurityOfIntention, 
-  CharityLevel, 
-  Quality, 
-  Circunstancias,
-  PURITY_LABELS,
-  CHARITY_LABELS,
-  QUALITY_LABELS,
-  CIRCUNSTANCIAS_LABELS,
-} from '@/lib/buenasObras.types';
-import { getPersonTypes, getActivities } from '@/lib/entities';
+import { getFilterSections, FilterSection } from '@/lib/dimensions';
+
+// Storage key for medios espirituales filter selection
+const MEDIOS_FILTER_SELECTION_KEY = 'magis_medios_filter_selection';
 
 interface FilterBuilderProps {
   value: MetricFilter;
   onChange: (filter: MetricFilter) => void;
 }
 
-interface FilterSection {
-  key: keyof MetricFilter;
-  label: string;
-  options: { value: string; label: string }[];
-}
-
-const ATTENTION_LABELS: Record<string, string> = {
-  deliberado: 'Deliberado',
-  semideliberado: 'Semideliberado',
-};
-
-const MOTIVE_LABELS: Record<string, string> = {
-  fragilidad: 'Fragilidad',
-  malicia: 'Malicia',
-  ignorancia: 'Ignorancia',
-};
-
 export function FilterBuilder({ value, onChange }: FilterBuilderProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const personTypes = getPersonTypes();
-  const activities = getActivities();
+  
+  // Get filter sections from single source of truth
+  const sections = getFilterSections();
 
-  // Dimensions in specified order (excluding "Pecado específico" from filters)
-  const sections: FilterSection[] = [
-    {
-      key: 'terms',
-      label: 'Término',
-      options: Object.entries(TERM_LABELS).map(([v, l]) => ({ value: v, label: l })),
-    },
-    {
-      key: 'personTypeIds',
-      label: 'Prójimo implicado',
-      options: personTypes.map(p => ({ value: p.id, label: p.name })),
-    },
-    {
-      key: 'gravities',
-      label: 'Gravedad',
-      options: Object.entries(GRAVITY_LABELS).map(([v, l]) => ({ value: v, label: l })),
-    },
-    {
-      key: 'capitalSins',
-      label: 'Pecado capital',
-      options: DEFAULT_CAPITAL_SINS.map(c => ({ value: c, label: c })),
-    },
-    {
-      key: 'virtudesTeologales',
-      label: 'Virtud teologal',
-      options: VIRTUES_TEOLOGALES.map(v => ({ value: v, label: v })),
-    },
-    {
-      key: 'virtudesCardinales',
-      label: 'Virtud moral cardinal',
-      options: VIRTUES_CARDINALES.map(v => ({ value: v, label: v })),
-    },
-    {
-      key: 'virtudesAnexas',
-      label: 'Virtud moral anexa (principales)',
-      options: VIRTUES_ANEXAS_INICIAL.map(v => ({ value: v, label: v })),
-    },
-    {
-      key: 'vows',
-      label: 'Voto',
-      options: DEFAULT_VOWS.map(v => ({ value: v, label: v })),
-    },
-    {
-      key: 'activityIds',
-      label: 'Actividad',
-      options: activities.map(a => ({ value: a.id, label: a.name })),
-    },
-    {
-      key: 'attentions',
-      label: 'Atención',
-      options: Object.entries(ATTENTION_LABELS).map(([v, l]) => ({ value: v, label: l })),
-    },
-    {
-      key: 'motives',
-      label: 'Motivo',
-      options: Object.entries(MOTIVE_LABELS).map(([v, l]) => ({ value: v, label: l })),
-    },
-    {
-      key: 'materiaTipos',
-      label: 'Tipo de materia',
-      options: Object.entries(MATERIA_TIPO_LABELS).map(([v, l]) => ({ value: v, label: l })),
-    },
-    {
-      key: 'purityOfIntentions',
-      label: 'Intención de la buena obra',
-      options: Object.entries(PURITY_LABELS).map(([v, l]) => ({ value: v, label: l })),
-    },
-    {
-      key: 'manifestations',
-      label: 'Manifestación',
-      options: Object.entries(MANIFESTATION_LABELS).map(([v, l]) => ({ value: v, label: l })),
-    },
-    {
-      key: 'modes',
-      label: 'Modo',
-      options: Object.entries(MODE_LABELS).map(([v, l]) => ({ value: v, label: l })),
-    },
-    {
-      key: 'charityLevels',
-      label: 'Caridad',
-      options: Object.entries(CHARITY_LABELS).map(([v, l]) => ({ value: v, label: l })),
-    },
-    {
-      key: 'qualities',
-      label: 'Calidad de la obra',
-      options: Object.entries(QUALITY_LABELS).map(([v, l]) => ({ value: v, label: l })),
-    },
-    {
-      key: 'circunstancias',
-      label: 'Circunstancias de la buena obra',
-      options: Object.entries(CIRCUNSTANCIAS_LABELS).map(([v, l]) => ({ value: v, label: l })),
-    },
-    {
-      key: 'condicionantes',
-      label: 'Condicionantes',
-      options: DEFAULT_CONDICIONANTES.map(c => ({ value: c, label: c })),
-    },
-    {
-      key: 'spiritualMeans',
-      label: 'Medios espirituales',
-      options: DEFAULT_SPIRITUAL_MEANS.map(m => ({ value: m, label: m })),
-    },
-  ];
+  // Listen for medios espirituales selection from dedicated page
+  useEffect(() => {
+    const storedSelection = localStorage.getItem(MEDIOS_FILTER_SELECTION_KEY);
+    if (storedSelection) {
+      try {
+        const parsed = JSON.parse(storedSelection);
+        if (Array.isArray(parsed)) {
+          onChange({
+            ...value,
+            spiritualMeans: parsed.length > 0 ? parsed : undefined,
+          });
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+      localStorage.removeItem(MEDIOS_FILTER_SELECTION_KEY);
+    }
+  }, [location.pathname]);
 
   const activeFilterCount = Object.values(value).filter(v => v?.length).length;
 
@@ -187,6 +63,22 @@ export function FilterBuilder({ value, onChange }: FilterBuilderProps) {
 
   const clearFilters = () => {
     onChange({});
+  };
+
+  const handleVerMas = (section: FilterSection) => {
+    // For medios espirituales, navigate to selection page
+    if (section.key === 'spiritualMeans') {
+      const currentSelection = (value.spiritualMeans as string[]) || [];
+      // Store return path for filter context
+      localStorage.setItem('magis_medios_return_path', location.pathname);
+      navigate('/medios-espirituales', { 
+        state: { 
+          selected: currentSelection,
+          returnPath: location.pathname,
+          storageKey: MEDIOS_FILTER_SELECTION_KEY
+        }
+      });
+    }
   };
 
   return (
@@ -234,9 +126,20 @@ export function FilterBuilder({ value, onChange }: FilterBuilderProps) {
               
               return (
                 <div key={section.key} className="space-y-2">
-                  <p className="text-ios-caption text-muted-foreground font-medium">
-                    {section.label}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-ios-caption text-muted-foreground font-medium">
+                      {section.label}
+                    </p>
+                    {section.hasVerMas && (
+                      <button
+                        onClick={() => handleVerMas(section)}
+                        className="text-accent text-ios-caption flex items-center gap-1 py-1 px-2 active:opacity-70 transition-opacity"
+                      >
+                        Ver más
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {section.options.map(option => {
                       const isSelected = sectionValues.includes(option.value);
@@ -255,6 +158,19 @@ export function FilterBuilder({ value, onChange }: FilterBuilderProps) {
                         </button>
                       );
                     })}
+                    {/* Show selected values not in initial options (from "Ver más") */}
+                    {section.hasVerMas && sectionValues
+                      .filter(v => !section.options.find(o => o.value === v))
+                      .map(v => (
+                        <button
+                          key={v}
+                          onClick={() => toggleFilter(section.key, v)}
+                          className="px-3 py-1.5 rounded-full text-sm bg-primary text-primary-foreground"
+                        >
+                          {v}
+                        </button>
+                      ))
+                    }
                   </div>
                 </div>
               );
