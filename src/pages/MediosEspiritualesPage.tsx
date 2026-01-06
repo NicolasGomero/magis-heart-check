@@ -24,10 +24,15 @@ export default function MediosEspiritualesPage() {
   const location = useLocation();
   
   // Get selected values from navigation state
-  const { selected = [], returnPath } = (location.state as { 
+  // storageKey can be customized for different contexts (form vs filter)
+  const { selected = [], returnPath, storageKey } = (location.state as { 
     selected?: string[]; 
     returnPath?: string;
+    storageKey?: string;
   }) || {};
+  
+  // Use custom storage key if provided, otherwise default
+  const effectiveStorageKey = storageKey || MEDIOS_SELECTION_KEY;
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedValues, setSelectedValues] = useState<string[]>(selected);
@@ -81,8 +86,8 @@ export default function MediosEspiritualesPage() {
   };
 
   const handleConfirm = () => {
-    // Save selection to localStorage for the form to pick up
-    localStorage.setItem(MEDIOS_SELECTION_KEY, JSON.stringify(selectedValues));
+    // Save selection to localStorage for the form/filter to pick up
+    localStorage.setItem(effectiveStorageKey, JSON.stringify(selectedValues));
     
     // Navigate back
     const storedReturnPath = localStorage.getItem(MEDIOS_RETURN_PATH_KEY);
