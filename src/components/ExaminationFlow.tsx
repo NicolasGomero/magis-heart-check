@@ -185,6 +185,27 @@ export function ExaminationFlow({
     return initialCounts;
   });
 
+  // Sync sinCounts when exam sessions are updated externally (e.g., historical discount)
+  useEffect(() => {
+    const handleSessionsUpdated = () => {
+      const allSessions = getExamSessions();
+      const newCounts: Record<string, number> = {};
+      
+      for (const session of allSessions) {
+        for (const event of session.events) {
+          newCounts[event.sinId] = (newCounts[event.sinId] || 0) + 1;
+        }
+      }
+      
+      setSinCounts(newCounts);
+    };
+
+    window.addEventListener('exam-sessions-updated', handleSessionsUpdated);
+    return () => {
+      window.removeEventListener('exam-sessions-updated', handleSessionsUpdated);
+    };
+  }, []);
+
   // Track session-specific counts (for discount functionality)
   const [sessionCounts, setSessionCounts] = useState<Record<string, number>>({});
 
