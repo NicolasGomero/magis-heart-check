@@ -15,7 +15,7 @@ const NAV_ITEMS = [{
   label: "Avance"
 }] as const;
 export function BottomNavBar() {
-  return <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border safe-bottom mb-[2px] mt-[2px] pb-0 py-[5px] pt-[5px] my-0">
+  return <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border safe-bottom mt-[2px] pb-0 py-[5px] pt-[5px] my-0 mb-0">
       <div className="flex items-center justify-around h-14 max-w-lg mx-auto">
         {NAV_ITEMS.map(({
         to,
