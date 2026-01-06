@@ -35,7 +35,7 @@
 
     /* Warm gold accent - sacred tradition */
     --accent: 43 96.4126% 56.2745%;
-    --accent-foreground: 37 92% 50%;
+    --accent-foreground: 0 0% 100%;
 
     /* Soft rose for gentle alerts */
     --destructive: 0 72% 50%;
@@ -112,7 +112,7 @@
     --muted-foreground: 60 9% 97%;
 
     --accent: 25 83% 14%;
-    --accent-foreground: 47 95% 53%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 85% 97%;
