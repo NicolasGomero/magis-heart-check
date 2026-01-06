@@ -13,12 +13,12 @@ import {
   DEFAULT_CATEGORIES,
   DEFAULT_THEOLOGICAL_AXES,
   DEFAULT_BUENA_OBRA_VIRTUES,
-  DEFAULT_BUENA_OBRA_CONDICIONANTES,
   type BuenaObraTerm,
   type SacrificioRelativo,
   type PurityOfIntention,
   type BuenaObra,
 } from "@/lib/buenasObras.types";
+import { getAllCondicionantes } from "@/lib/preferences";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -331,7 +331,7 @@ export function BuenaObraEditPage() {
           
           <MultiSelect
             label="Condicionantes compatibles"
-            options={DEFAULT_BUENA_OBRA_CONDICIONANTES.map(c => ({ value: c, label: c }))}
+            options={getAllCondicionantes().map(c => ({ value: c, label: c }))}
             selected={buenaObra.condicionantes}
             onChange={(v) => updateField('condicionantes', v)}
             allowCustom
