@@ -4,7 +4,7 @@ import { IOSHeader } from "./IOSHeader";
 import { SinCard } from "./examination/SinCard";
 import { AddFreeformSinSheet } from "./examination/AddFreeformSinSheet";
 import { ResponsibilitySheet } from "./examination/ResponsibilitySheet";
-import { createExamSession, addSinEvent, updateSinEvent, removeSinEvent, completeExamSession, addFreeformSin, getExamSession, getExamSessions } from "@/lib/examSessions";
+import { createExamSession, addSinEvent, updateSinEvent, removeSinEvent, completeExamSession, addFreeformSin, getExamSession, getExamSessions, removeLastSinEventForSin, getEventCountForSin } from "@/lib/examSessions";
 import { getSins, createSin } from "@/lib/sins.storage";
 import { getPreferences } from "@/lib/preferences";
 import { calculateCondicionantesFactor } from "@/lib/condicionantes";
@@ -239,29 +239,46 @@ export function ExaminationFlow({
     }));
   }, [sessionId, getSinState, allSins]);
 
-  // Handle discount (remove last event for this sin in current session)
+  // Handle discount (remove last event for this sin - prioritize current session, then historical)
   const handleDiscount = useCallback((sinId: string) => {
     const sessionCount = sessionCounts[sinId] || 0;
-    if (sessionCount === 0) {
-      toast.info("No hay marcas en esta sesión para descontar");
+
+    // First, try to discount from current session
+    if (sessionCount > 0) {
+      const events = getCurrentEvents();
+      const sinEvents = events.filter(e => e.sinId === sinId);
+      if (sinEvents.length > 0) {
+        const lastEvent = sinEvents[sinEvents.length - 1];
+        removeSinEvent(sessionId, lastEvent.id);
+        setSinCounts(prev => ({
+          ...prev,
+          [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
+        }));
+        setSessionCounts(prev => ({
+          ...prev,
+          [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
+        }));
+        toast.success("Marca descontada de esta sesión");
+        return;
+      }
+    }
+
+    // If no events in current session, try to discount from historical data
+    const totalCount = getEventCountForSin(sinId);
+    if (totalCount === 0) {
+      toast.info("No hay registros para descontar");
       return;
     }
 
-    // Find and remove the last event for this sin in current session
-    const events = getCurrentEvents();
-    const sinEvents = events.filter(e => e.sinId === sinId);
-    if (sinEvents.length > 0) {
-      const lastEvent = sinEvents[sinEvents.length - 1];
-      removeSinEvent(sessionId, lastEvent.id);
+    const success = removeLastSinEventForSin(sinId);
+    if (success) {
       setSinCounts(prev => ({
         ...prev,
         [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
       }));
-      setSessionCounts(prev => ({
-        ...prev,
-        [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
-      }));
-      toast.success("Marca descontada");
+      toast.success("Registro histórico descontado");
+    } else {
+      toast.error("No se pudo descontar el registro");
     }
   }, [sessionId, sessionCounts, getCurrentEvents]);
 
