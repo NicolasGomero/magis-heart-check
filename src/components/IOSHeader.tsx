@@ -11,7 +11,7 @@ export function IOSHeader({ title, subtitle, onBack, rightAction }: IOSHeaderPro
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm safe-top">
       <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
-        <div className="w-20 flex-shrink-0">
+        <div className="w-20 flex-shrink-0 flex items-center">
           {onBack && (
             <button
               onClick={onBack}
