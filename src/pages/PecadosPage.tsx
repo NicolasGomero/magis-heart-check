@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Plus, MoreVertical, EyeOff, Eye, Minus, Pencil, Trash2 } from "lucide-react";
+import { Plus, MoreVertical, EyeOff, Eye, Minus, Pencil, Trash2, StickyNote } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { IOSHeader } from "@/components/IOSHeader";
 import { getSins, toggleSinDisabled, deleteSin } from "@/lib/sins.storage";
@@ -169,6 +169,10 @@ export default function PecadosPage() {
                     <DropdownMenuItem onClick={() => navigate(`/sins/${sin.id}`)}>
                       <Pencil className="w-4 h-4 mr-2" />
                       Editar pecado
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(`/notas/${sin.id}?type=sin&return=/obras/pecados`)}>
+                      <StickyNote className="w-4 h-4 mr-2" />
+                      Notas
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => handleDelete(sin.id, sin.name)}

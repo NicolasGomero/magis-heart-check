@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Plus, MoreVertical, EyeOff, Eye, Minus, Pencil, Trash2 } from "lucide-react";
+import { Plus, MoreVertical, EyeOff, Eye, Minus, Pencil, Trash2, StickyNote } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { IOSHeader } from "@/components/IOSHeader";
 import { getBuenasObras, toggleBuenaObraDisabled, deleteBuenaObra } from "@/lib/buenasObras.storage";
@@ -150,6 +150,10 @@ export default function BuenasObrasPage() {
                     <DropdownMenuItem onClick={() => navigate(`/obras/buenas/${buenaObra.id}`)}>
                       <Pencil className="w-4 h-4 mr-2" />
                       Editar buena obra
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(`/notas/${buenaObra.id}?type=goodWork&return=/obras/buenas`)}>
+                      <StickyNote className="w-4 h-4 mr-2" />
+                      Notas
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => handleDelete(buenaObra.id, buenaObra.name)}
