@@ -391,7 +391,7 @@ export function ExaminationFlow({
       </div>
       
       {/* Bottom actions - increased bottom padding for safe area */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-background via-background to-transparent safe-bottom pt-0 mb-[25px]">
+      <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-background via-background to-transparent safe-bottom pt-0 mb-20">
         <div className="flex gap-3 mb-4">
           {/* Add freeform sin button */}
           <button onClick={() => setShowFreeformSheet(true)} className="p-4 rounded-xl bg-secondary text-secondary-foreground shadow-lg active:scale-[0.98] transition-transform">
