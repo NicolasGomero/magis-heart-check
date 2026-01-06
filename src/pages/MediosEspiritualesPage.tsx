@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { IOSHeader } from '@/components/IOSHeader';
 import { Input } from '@/components/ui/input';
@@ -15,14 +15,18 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
+// Storage keys for temporary selection persistence
+const MEDIOS_SELECTION_KEY = 'magis_medios_selection';
+const MEDIOS_RETURN_PATH_KEY = 'magis_medios_return_path';
+
 export default function MediosEspiritualesPage() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get selected values and callback from navigation state
-  const { selected = [], onSelect } = (location.state as { 
+  // Get selected values from navigation state
+  const { selected = [], returnPath } = (location.state as { 
     selected?: string[]; 
-    onSelect?: (values: string[]) => void 
+    returnPath?: string;
   }) || {};
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,6 +34,13 @@ export default function MediosEspiritualesPage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newMedio, setNewMedio] = useState('');
   const [customMedios, setCustomMedios] = useState<string[]>([]);
+
+  // Store return path on mount
+  useEffect(() => {
+    if (returnPath) {
+      localStorage.setItem(MEDIOS_RETURN_PATH_KEY, returnPath);
+    }
+  }, [returnPath]);
 
   // Filter medios by search query
   const filteredBloques = useMemo(() => {
@@ -70,10 +81,16 @@ export default function MediosEspiritualesPage() {
   };
 
   const handleConfirm = () => {
-    if (onSelect) {
-      onSelect(selectedValues);
+    // Save selection to localStorage for the form to pick up
+    localStorage.setItem(MEDIOS_SELECTION_KEY, JSON.stringify(selectedValues));
+    
+    // Navigate back
+    const storedReturnPath = localStorage.getItem(MEDIOS_RETURN_PATH_KEY);
+    if (storedReturnPath) {
+      navigate(storedReturnPath);
+    } else {
+      navigate(-1);
     }
-    navigate(-1);
   };
 
   return (
