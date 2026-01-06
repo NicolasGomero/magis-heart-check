@@ -45,7 +45,7 @@ function StateIndicator({
         <h1 className="font-bold text-foreground mb-1 text-4xl">MAGIS</h1>
         <p className="text-ios-footnote text-muted-foreground mb-3">Mira dentro de ti y dispón tu corazón 
 hacia un mayor amor.</p>
-        <p className="text-ios-subhead text-muted-foreground/70">{timeAgo}</p>
+        <p className="text-muted-foreground/70 text-ios-caption">{timeAgo}</p>
       </div>
     </div>;
 }
