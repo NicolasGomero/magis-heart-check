@@ -9,7 +9,7 @@ export const SEED_CONDICIONANTES = [
   'Trastornos psíquicos',
   'Educación gravemente deficiente',
   'Contextos culturales deformados',
-  'Estados prolongados de estrés o sufrimiento',
+  'Estrés o sufrimiento prolongados',
   'Hábito arraigado o adicción',
   'Economía doméstica precaria',
   'Crisis económica',
@@ -25,21 +25,23 @@ export type SeedCondicionante = typeof SEED_CONDICIONANTES[number];
 
 const CONDICIONANTES_MIGRATION_MAP: Record<string, string> = {
   // From sins.types.ts DEFAULT_CONDICIONANTES
-  'Fatiga': 'Estados prolongados de estrés o sufrimiento',
+  'Fatiga': 'Estrés o sufrimiento prolongados',
   'Enfermedad': 'Salud crónica',
-  'Estrés': 'Estados prolongados de estrés o sufrimiento',
-  'Falta de sueño': 'Estados prolongados de estrés o sufrimiento',
+  'Estrés': 'Estrés o sufrimiento prolongados',
+  'Falta de sueño': 'Estrés o sufrimiento prolongados',
   'Hambre': 'Economía doméstica precaria',
   'Prisa': 'Excesiva carga laboral justificada',
   'Miedo': 'Trastornos psíquicos',
   'Ira previa': 'Temperamento desfavorable',
-  'Tristeza': 'Estados prolongados de estrés o sufrimiento',
-  'Soledad': 'Estados prolongados de estrés o sufrimiento',
+  'Tristeza': 'Estrés o sufrimiento prolongados',
+  'Soledad': 'Estrés o sufrimiento prolongados',
   'Tentación fuerte': 'Hábito arraigado o adicción',
   'Costumbre arraigada': 'Hábito arraigado o adicción',
   // From buenasObras.types.ts DEFAULT_BUENA_OBRA_CONDICIONANTES
   'Dificultad externa': 'Contextos culturales deformados',
   'Incomprensión': 'Contextos culturales deformados',
+  // Old name migration
+  'Estados prolongados de estrés o sufrimiento': 'Estrés o sufrimiento prolongados',
 };
 
 // ========== Migration Function ==========
