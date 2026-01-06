@@ -52,7 +52,7 @@ export default function BuenaObraDetallePage() {
     
     for (const term of buenaObra.terms) {
       characteristics.push({
-        name: `Término: ${termLabels[term]}`,
+        name: termLabels[term],
         totalEvents: 0,
         itemEvents: 0,
         itemPercentage: 0,
@@ -66,7 +66,7 @@ export default function BuenaObraDetallePage() {
       if (!pt) continue;
       
       characteristics.push({
-        name: `Prójimo: ${pt.name}`,
+        name: pt.name,
         totalEvents: 0,
         itemEvents: 0,
         itemPercentage: 0,
@@ -80,7 +80,7 @@ export default function BuenaObraDetallePage() {
       if (!act) continue;
       
       characteristics.push({
-        name: `Actividad: ${act.name}`,
+        name: act.name,
         totalEvents: 0,
         itemEvents: 0,
         itemPercentage: 0,
@@ -125,13 +125,17 @@ export default function BuenaObraDetallePage() {
         <section className="bg-card rounded-xl p-4 border border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-ios-caption text-muted-foreground">Ejecuciones en el periodo</p>
+              <p className="text-ios-caption text-muted-foreground">
+                Ejecuciones del ítem
+              </p>
               <p className="text-ios-title2 font-semibold text-foreground">
                 {metricsData?.totalEvents || 0}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-ios-caption text-muted-foreground">Score total</p>
+              <p className="text-ios-caption text-muted-foreground">
+                Puntos en el periodo
+              </p>
               <p className="text-ios-title2 font-semibold text-foreground">
                 {metricsData?.totalScore.toFixed(1) || '0.0'}
               </p>
@@ -151,7 +155,9 @@ export default function BuenaObraDetallePage() {
         {/* Characteristics Table */}
         {metricsData && metricsData.characteristics.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-ios-headline text-foreground">Características asociadas</h2>
+            <h2 className="text-ios-subhead text-foreground leading-tight">
+              Impacto de la obra en la variación agregada de sus características
+            </h2>
             
             <div className="bg-card rounded-xl border border-border overflow-hidden">
               {metricsData.characteristics.map((char, index) => (
@@ -162,7 +168,7 @@ export default function BuenaObraDetallePage() {
                     index !== metricsData.characteristics.length - 1 && "border-b border-border/50"
                   )}
                 >
-                  <p className="text-ios-body text-foreground">{char.name}</p>
+                  <p className="text-ios-body text-foreground break-words">{char.name}</p>
                 </div>
               ))}
             </div>

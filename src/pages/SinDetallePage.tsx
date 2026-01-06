@@ -126,7 +126,7 @@ export default function SinDetallePage() {
       const itemCurrent = sinTermEvents.reduce((sum, e) => sum + e.score, 0);
       
       characteristics.push({
-        name: `Término: ${termLabels[term]}`,
+        name: termLabels[term],
         totalEvents: allTermEvents.length,
         itemEvents: sinTermEvents.length,
         itemPercentage: totalCurrent > 0 ? (itemCurrent / totalCurrent) * 100 : 0,
@@ -157,7 +157,7 @@ export default function SinDetallePage() {
       const itemCurrent = sinGravEvents.reduce((sum, e) => sum + e.score, 0);
       
       characteristics.push({
-        name: `Gravedad: ${gravityLabels[gravity]}`,
+        name: gravityLabels[gravity],
         totalEvents: allGravEvents.length,
         itemEvents: sinGravEvents.length,
         itemPercentage: totalCurrent > 0 ? (itemCurrent / totalCurrent) * 100 : 0,
@@ -186,7 +186,7 @@ export default function SinDetallePage() {
       const itemCurrent = sinPtEvents.reduce((sum, e) => sum + e.score, 0);
       
       characteristics.push({
-        name: `Prójimo: ${pt.name}`,
+        name: pt.name,
         totalEvents: allPtEvents.length,
         itemEvents: sinPtEvents.length,
         itemPercentage: totalCurrent > 0 ? (itemCurrent / totalCurrent) * 100 : 0,
@@ -215,7 +215,7 @@ export default function SinDetallePage() {
       const itemCurrent = sinActEvents.reduce((sum, e) => sum + e.score, 0);
       
       characteristics.push({
-        name: `Actividad: ${act.name}`,
+        name: act.name,
         totalEvents: allActEvents.length,
         itemEvents: sinActEvents.length,
         itemPercentage: totalCurrent > 0 ? (itemCurrent / totalCurrent) * 100 : 0,
@@ -241,7 +241,7 @@ export default function SinDetallePage() {
       const itemCurrent = sinCapEvents.reduce((sum, e) => sum + e.score, 0);
       
       characteristics.push({
-        name: `Pecado capital: ${capital}`,
+        name: capital,
         totalEvents: allCapEvents.length,
         itemEvents: sinCapEvents.length,
         itemPercentage: totalCurrent > 0 ? (itemCurrent / totalCurrent) * 100 : 0,
@@ -293,13 +293,17 @@ export default function SinDetallePage() {
         <section className="bg-card rounded-xl p-4 border border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-ios-caption text-muted-foreground">Eventos en el periodo</p>
+              <p className="text-ios-caption text-muted-foreground">
+                Registros del ítem
+              </p>
               <p className="text-ios-title2 font-semibold text-foreground">
                 {metricsData?.totalEvents || 0}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-ios-caption text-muted-foreground">Score total</p>
+              <p className="text-ios-caption text-muted-foreground">
+                Puntos en el periodo
+              </p>
               <p className="text-ios-title2 font-semibold text-foreground">
                 {metricsData?.totalScore.toFixed(1) || '0.0'}
               </p>
@@ -321,7 +325,9 @@ export default function SinDetallePage() {
         {/* Characteristics Table */}
         {metricsData && metricsData.characteristics.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-ios-headline text-foreground">Desglose por características</h2>
+            <h2 className="text-ios-subhead text-foreground leading-tight">
+              Impacto de la obra en la variación agregada de sus características
+            </h2>
             
             <div className="bg-card rounded-xl border border-border overflow-hidden">
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-muted/50 text-ios-caption text-muted-foreground font-medium">
@@ -334,11 +340,11 @@ export default function SinDetallePage() {
                 <div 
                   key={index}
                   className={cn(
-                    "grid grid-cols-12 gap-2 px-4 py-3 items-center",
+                    "grid grid-cols-12 gap-2 px-4 py-3 items-start",
                     index !== metricsData.characteristics.length - 1 && "border-b border-border/50"
                   )}
                 >
-                  <div className="col-span-5 text-ios-subhead text-foreground truncate">
+                  <div className="col-span-5 text-ios-subhead text-foreground break-words">
                     {char.name}
                   </div>
                   <div className="col-span-3 flex justify-end">
