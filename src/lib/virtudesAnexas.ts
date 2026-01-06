@@ -89,11 +89,20 @@ export const VIRTUDES_ANEXAS_POR_CARDINAL: VirtudAnexaGroup[] = [
 // Flat list of all virtudes anexas
 export const ALL_VIRTUDES_ANEXAS = VIRTUDES_ANEXAS_POR_CARDINAL.flatMap(g => g.virtudes);
 
-// Initial virtudes shown (first 5)
-export const VIRTUDES_ANEXAS_INICIAL = [
+// Lista cerrada de virtudes anexas "principales" (11 opciones exactas)
+export const VIRTUDES_ANEXAS_PRINCIPALES: string[] = [
   'Religión',
-  'Magnanimidad',
-  'Paciencia',
   'Humildad',
-  'Honestidad',
+  'Paciencia',
+  'Gratitud',
+  'Afabilidad',
+  'Constancia',
+  'Liberalidad',
+  'Magnanimidad',
+  'Continencia',
+  'Mansedumbre',
+  'Misericordia',
 ];
+
+// @deprecated - Use VIRTUDES_ANEXAS_PRINCIPALES instead
+export const VIRTUDES_ANEXAS_INICIAL = VIRTUDES_ANEXAS_PRINCIPALES;

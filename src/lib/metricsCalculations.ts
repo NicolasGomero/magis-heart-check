@@ -534,7 +534,7 @@ export const DIMENSION_LABELS: Record<DimensionKey, string> = {
   capitalSin: 'Pecado capital',
   virtudeTeologal: 'Virtud teologal',
   virtudeCardinal: 'Virtud moral cardinal',
-  virtudeAnexa: 'Virtud moral anexa',
+  virtudeAnexa: 'Virtud moral anexa (principales)',
   vow: 'Voto',
   activity: 'Actividad',
   attention: 'Atención',

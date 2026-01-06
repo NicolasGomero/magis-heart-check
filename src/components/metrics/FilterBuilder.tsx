@@ -101,7 +101,7 @@ export function FilterBuilder({ value, onChange }: FilterBuilderProps) {
     },
     {
       key: 'virtudesAnexas',
-      label: 'Virtud moral anexa',
+      label: 'Virtud moral anexa (principales)',
       options: VIRTUES_ANEXAS_INICIAL.map(v => ({ value: v, label: v })),
     },
     {

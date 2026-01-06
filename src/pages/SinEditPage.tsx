@@ -612,7 +612,7 @@ export function SinEditPage() {
           />
           
           <NavigableMultiSelect
-            label="Virtud moral anexa"
+            label="Virtud moral anexa (principales)"
             initialOptions={VIRTUDES_ANEXAS_INICIAL}
             selected={sin.oppositeVirtues.filter(v => 
               !VIRTUES_TEOLOGALES.includes(v) && !VIRTUES_CARDINALES.includes(v)

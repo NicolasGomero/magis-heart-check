@@ -79,7 +79,7 @@ export default function VirtudesAnexasPage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <IOSHeader 
-        title="Virtud moral anexa" 
+        title="Virtud moral anexa (principales)" 
         onBack={() => navigate(-1)}
         rightAction={
           <Button size="sm" onClick={handleConfirm}>
