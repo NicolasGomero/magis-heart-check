@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Plus, MoreVertical, EyeOff, Eye, Minus, Pencil, Trash2, StickyNote } from "lucide-react";
+import { Plus, MoreVertical, EyeOff, Eye, Minus, Pencil, Trash2, StickyNote, ChevronDown, ChevronUp } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { IOSHeader } from "@/components/IOSHeader";
 import { getBuenasObras, toggleBuenaObraDisabled, deleteBuenaObra } from "@/lib/buenasObras.storage";
@@ -25,6 +25,7 @@ function getTermBadgeColor(term: BuenaObraTerm) {
 export default function BuenasObrasPage() {
   const navigate = useNavigate();
   const [buenasObras, setBuenasObras] = useState<BuenaObra[]>([]);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const refresh = useCallback(() => {
     setBuenasObras(getBuenasObras());
@@ -58,6 +59,19 @@ export default function BuenasObrasPage() {
     }
   };
 
+  const toggleExpanded = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   const getPrimaryTerm = (buenaObra: BuenaObra): BuenaObraTerm | null => buenaObra.terms[0] || null;
 
   return (
@@ -77,21 +91,58 @@ export default function BuenasObrasPage() {
           {buenasObras.map((buenaObra) => {
             const primaryTerm = getPrimaryTerm(buenaObra);
             const isDisabled = buenaObra.isDisabled ?? false;
+            const isExpanded = expandedIds.has(buenaObra.id);
+            const hasDescription = !!buenaObra.shortDescription;
             
             return (
               <div
                 key={buenaObra.id}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3",
+                  "relative flex gap-3 px-4 py-3",
                   "border-b border-border/50 last:border-b-0",
                   isDisabled && "opacity-50"
                 )}
               >
+                {/* Three dots menu - top right */}
+                <div className="absolute top-2 right-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button 
+                        className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="w-5 h-5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-popover">
+                      <DropdownMenuItem onClick={() => handleDiscount(buenaObra.id)}>
+                        <Minus className="w-4 h-4 mr-2" />
+                        Descontar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/obras/buenas/${buenaObra.id}`)}>
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Editar buena obra
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/notas/${buenaObra.id}?type=goodWork&return=/obras/buenas`)}>
+                        <StickyNote className="w-4 h-4 mr-2" />
+                        Notas
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleDelete(buenaObra.id, buenaObra.name)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Eliminar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
                 {/* Toggle disabled button */}
                 <button
                   onClick={(e) => handleToggleDisabled(e, buenaObra.id)}
                   className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
+                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 self-start mt-0.5",
                     "transition-colors active:scale-95",
                     isDisabled 
                       ? "bg-muted text-muted-foreground" 
@@ -109,16 +160,35 @@ export default function BuenasObrasPage() {
                 {/* Main content - clickable to detail/metrics */}
                 <button
                   onClick={() => navigate(`/obras/buenas/${buenaObra.id}/detalle`)}
-                  className="flex-1 min-w-0 text-left"
+                  className="flex-1 min-w-0 text-left pr-8"
                 >
                   <p className="text-ios-body font-medium text-foreground truncate">
                     {buenaObra.name}
                   </p>
-                  {buenaObra.shortDescription && (
-                    <p className="text-ios-caption text-muted-foreground truncate">
-                      {buenaObra.shortDescription}
-                    </p>
+                  
+                  {/* Description with chevron */}
+                  {hasDescription && (
+                    <div className="flex items-start gap-1 mt-0.5">
+                      <p className={cn(
+                        "text-ios-caption text-muted-foreground flex-1",
+                        !isExpanded && "truncate"
+                      )}>
+                        {buenaObra.shortDescription}
+                      </p>
+                      <button
+                        onClick={(e) => toggleExpanded(e, buenaObra.id)}
+                        className="flex-shrink-0 p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={isExpanded ? "Colapsar" : "Expandir"}
+                      >
+                        {isExpanded ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
                   )}
+                  
                   {primaryTerm && (
                     <div className="flex gap-2 mt-1">
                       <span className={cn(
@@ -131,39 +201,6 @@ export default function BuenasObrasPage() {
                     </div>
                   )}
                 </button>
-
-                {/* Three dots menu */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button 
-                      className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreVertical className="w-5 h-5" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-popover">
-                    <DropdownMenuItem onClick={() => handleDiscount(buenaObra.id)}>
-                      <Minus className="w-4 h-4 mr-2" />
-                      Descontar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate(`/obras/buenas/${buenaObra.id}`)}>
-                      <Pencil className="w-4 h-4 mr-2" />
-                      Editar buena obra
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate(`/notas/${buenaObra.id}?type=goodWork&return=/obras/buenas`)}>
-                      <StickyNote className="w-4 h-4 mr-2" />
-                      Notas
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleDelete(buenaObra.id, buenaObra.name)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Eliminar
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
             );
           })}
