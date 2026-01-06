@@ -299,16 +299,23 @@ export function ExaminationFlow({
       const sinEvents = events.filter(e => e.sinId === sinId);
       if (sinEvents.length > 0) {
         const lastEvent = sinEvents[sinEvents.length - 1];
-        removeSinEvent(sessionId, lastEvent.id);
-        setSinCounts(prev => ({
-          ...prev,
-          [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
-        }));
-        setSessionCounts(prev => ({
-          ...prev,
-          [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
-        }));
-        toast.success("Marca descontada de esta sesión");
+        
+        // Verify event was removed successfully before updating counts
+        const success = removeSinEvent(sessionId, lastEvent.id);
+        
+        if (success) {
+          setSinCounts(prev => ({
+            ...prev,
+            [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
+          }));
+          setSessionCounts(prev => ({
+            ...prev,
+            [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
+          }));
+          toast.success("Marca descontada de esta sesión");
+        } else {
+          toast.error("No se pudo descontar la marca");
+        }
         return;
       }
     }
