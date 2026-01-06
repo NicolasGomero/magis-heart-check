@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
-import { ChevronDown, ChevronUp, MoreVertical, Minus, Pencil } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ChevronDown, ChevronUp, MoreVertical, Minus, Pencil, StickyNote } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Sin } from "@/lib/sins.types";
 import { getLevelColor } from "@/lib/sins.types";
@@ -33,6 +34,7 @@ export function SinCard({
   onMotiveChange,
   onEdit,
 }: SinCardProps) {
+  const navigate = useNavigate();
   const [showDescription, setShowDescription] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
@@ -192,6 +194,10 @@ export function SinCard({
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="w-4 h-4 mr-2" />
               Editar pecado
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(`/notas/${sin.id}?type=sin&return=/examen`)}>
+              <StickyNote className="w-4 h-4 mr-2" />
+              Notas
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

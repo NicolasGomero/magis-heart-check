@@ -18,6 +18,7 @@ import ImportPage from "@/pages/ImportPage";
 import BackupPage from "@/pages/BackupPage";
 import VirtudesAnexasPage from "@/pages/VirtudesAnexasPage";
 import MediosEspiritualesPage from "@/pages/MediosEspiritualesPage";
+import NotasPage from "@/pages/NotasPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
           <Route path="/sins/:id" element={<SinEditPage />} />
           <Route path="/virtudes-anexas" element={<VirtudesAnexasPage />} />
           <Route path="/medios-espirituales" element={<MediosEspiritualesPage />} />
+          <Route path="/notas/:id" element={<NotasPage />} />
           
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
