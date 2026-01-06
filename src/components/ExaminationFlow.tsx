@@ -167,6 +167,15 @@ export function ExaminationFlow({
     return session.id;
   });
 
+  // Verify session exists on mount
+  useEffect(() => {
+    const session = getExamSession(sessionId);
+    if (!session) {
+      console.error('[ExamFlow] Session not found in storage!');
+      toast.error("Error: La sesión no se guardó correctamente");
+    }
+  }, [sessionId]);
+
   // Track events per sin (for count display) - initialize with persisted counts
   const [sinCounts, setSinCounts] = useState<Record<string, number>>(() => {
     const initialCounts: Record<string, number> = {};
@@ -256,21 +265,28 @@ export function ExaminationFlow({
       k: 0,
       factor: 1.0
     };
-    addSinEvent(sessionId, sinId, {
+    
+    // Verify event was added successfully before updating counts
+    const event = addSinEvent(sessionId, sinId, {
       attention: state.attention,
       motive: state.motive,
       appliedCondicionantes: condicionantesResult.appliedCondicionantes,
       condicionantesK: condicionantesResult.k,
       condicionantesFactor: condicionantesResult.factor
     });
-    setSinCounts(prev => ({
-      ...prev,
-      [sinId]: (prev[sinId] || 0) + 1
-    }));
-    setSessionCounts(prev => ({
-      ...prev,
-      [sinId]: (prev[sinId] || 0) + 1
-    }));
+    
+    if (event) {
+      setSinCounts(prev => ({
+        ...prev,
+        [sinId]: (prev[sinId] || 0) + 1
+      }));
+      setSessionCounts(prev => ({
+        ...prev,
+        [sinId]: (prev[sinId] || 0) + 1
+      }));
+    } else {
+      toast.error("No se pudo registrar el evento");
+    }
   }, [sessionId, getSinState, allSins]);
 
   // Handle discount (remove last event for this sin - prioritize current session, then historical)
