@@ -278,7 +278,7 @@ export function DimensionTabs({ metrics }: DimensionTabsProps) {
         )}
 
         {metrics.byVirtudeAnexa.size > 0 && (
-          <DimensionSection title="Virtud moral anexa">
+          <DimensionSection title="Virtud moral anexa (principales)">
             {Array.from(metrics.byVirtudeAnexa.entries()).map(([virtue, data]) => (
               <div key={virtue} className="space-y-1">
                 <div className="flex items-center justify-between">
