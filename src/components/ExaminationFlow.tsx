@@ -291,33 +291,31 @@ export function ExaminationFlow({
 
   // Handle discount (remove last event for this sin - prioritize current session, then historical)
   const handleDiscount = useCallback((sinId: string) => {
-    const sessionCount = sessionCounts[sinId] || 0;
+    // Get current session events directly (fresh from storage)
+    const events = getCurrentEvents();
+    const sinEvents = events.filter(e => e.sinId === sinId);
 
-    // First, try to discount from current session
-    if (sessionCount > 0) {
-      const events = getCurrentEvents();
-      const sinEvents = events.filter(e => e.sinId === sinId);
-      if (sinEvents.length > 0) {
-        const lastEvent = sinEvents[sinEvents.length - 1];
-        
-        // Verify event was removed successfully before updating counts
-        const success = removeSinEvent(sessionId, lastEvent.id);
-        
-        if (success) {
-          setSinCounts(prev => ({
-            ...prev,
-            [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
-          }));
-          setSessionCounts(prev => ({
-            ...prev,
-            [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
-          }));
-          toast.success("Marca descontada de esta sesión");
-        } else {
-          toast.error("No se pudo descontar la marca");
-        }
-        return;
+    // First, try to discount from current session if there are events
+    if (sinEvents.length > 0) {
+      const lastEvent = sinEvents[sinEvents.length - 1];
+      
+      // Verify event was removed successfully before updating counts
+      const success = removeSinEvent(sessionId, lastEvent.id);
+      
+      if (success) {
+        setSinCounts(prev => ({
+          ...prev,
+          [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
+        }));
+        setSessionCounts(prev => ({
+          ...prev,
+          [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
+        }));
+        toast.success("Marca descontada de esta sesión");
+      } else {
+        toast.error("No se pudo descontar la marca");
       }
+      return;
     }
 
     // If no events in current session, try to discount from historical data
@@ -337,7 +335,7 @@ export function ExaminationFlow({
     } else {
       toast.error("No se pudo descontar el registro");
     }
-  }, [sessionId, sessionCounts, getCurrentEvents]);
+  }, [sessionId, getCurrentEvents]);
 
   // Update attention for a sin
   const handleAttentionChange = useCallback((sinId: string, attention: 'deliberado' | 'semideliberado') => {
