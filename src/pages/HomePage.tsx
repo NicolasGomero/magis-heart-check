@@ -42,9 +42,9 @@ function StateIndicator({
   const config = stateConfig[state];
   return <div className={cn("mx-4 p-5 rounded-2xl border-2", config.bg, config.borderColor)}>
       <div className="text-center">
-        <p className="text-ios-subhead text-muted-foreground mb-1">{timeAgo}</p>
-        <h2 className="text-ios-title text-foreground mb-1">{config.text}</h2>
-        <p className="text-ios-callout text-muted-foreground">{config.description}</p>
+        <h1 className="text-2xl font-bold text-foreground mb-1">MAGIS</h1>
+        <p className="text-ios-callout text-muted-foreground mb-3">Mira dentro de ti y dispón tu corazón hacia un mayor amor.</p>
+        <p className="text-ios-subhead text-muted-foreground/70">{timeAgo}</p>
       </div>
     </div>;
 }
