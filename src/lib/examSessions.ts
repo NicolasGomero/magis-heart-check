@@ -268,10 +268,12 @@ export function getExamState(minutes: number | null): ExamState {
 export function removeLastSinEventForSin(sinId: string): boolean {
   const sessions = getExamSessions();
   
-  // Find the most recent event for this sin across all sessions
+  // Find the most recent event for this sin across COMPLETED sessions only
   let lastEventInfo: { sessionIndex: number; eventId: string; timestamp: number } | null = null;
   
   sessions.forEach((session, sessionIndex) => {
+    if (!session.endedAt) return; // Only search in completed sessions
+    
     for (const event of session.events) {
       if (event.sinId === sinId) {
         if (!lastEventInfo || event.timestamp > lastEventInfo.timestamp) {
@@ -301,6 +303,7 @@ export function getEventCountForSin(sinId: string): number {
   const sessions = getExamSessions();
   let count = 0;
   for (const session of sessions) {
+    if (!session.endedAt) continue; // Only count from completed sessions
     count += session.events.filter(e => e.sinId === sinId).length;
   }
   return count;
