@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { TrajectoryChart } from './TrajectoryChart';
 import { MetricsResult, TrajectoryData } from '@/lib/metricsCalculations';
 import { 
@@ -96,15 +96,7 @@ export function DimensionTabs({ metrics }: DimensionTabsProps) {
   const getActivityName = (id: string) => activities.find(a => a.id === id)?.name || id;
 
   return (
-    <Tabs defaultValue="all" className="w-full">
-      <TabsList className="w-full flex overflow-x-auto no-scrollbar bg-muted/50">
-        <TabsTrigger value="all" className="flex-1 min-w-fit text-xs">Todas</TabsTrigger>
-        <TabsTrigger value="term" className="flex-1 min-w-fit text-xs">Término</TabsTrigger>
-        <TabsTrigger value="gravity" className="flex-1 min-w-fit text-xs">Gravedad</TabsTrigger>
-      </TabsList>
-
-      {/* All dimensions in order */}
-      <TabsContent value="all" className="space-y-4 mt-4">
+    <div className="w-full space-y-4">
         {/* Término */}
         <DimensionSection title={DIMENSION_LABELS.term} defaultOpen>
           {Array.from(metrics.byTerm.entries()).map(([term, data]) => (
@@ -329,46 +321,6 @@ export function DimensionTabs({ metrics }: DimensionTabsProps) {
             ))}
           </DimensionSection>
         )}
-      </TabsContent>
-
-      <TabsContent value="term" className="space-y-3 mt-4">
-        {Array.from(metrics.byTerm.entries()).map(([term, data]) => (
-          <div key={term} className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-ios-caption text-muted-foreground">{TERM_LABELS[term]}</span>
-              <ContributionBadge percent={data.contributionPercent} />
-            </div>
-            <TrajectoryChart
-              data={data}
-              title={TERM_LABELS[term]}
-              color={DIMENSION_COLORS[term]}
-              showTitle={false}
-            />
-          </div>
-        ))}
-        {metrics.byTerm.size === 0 && (
-          <p className="text-ios-body text-muted-foreground text-center py-8">
-            No hay datos para mostrar
-          </p>
-        )}
-      </TabsContent>
-
-      <TabsContent value="gravity" className="space-y-3 mt-4">
-        {Array.from(metrics.byGravity.entries()).map(([gravity, data]) => (
-          <div key={gravity} className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-ios-caption text-muted-foreground">{GRAVITY_LABELS[gravity]}</span>
-              <ContributionBadge percent={data.contributionPercent} />
-            </div>
-            <TrajectoryChart
-              data={data}
-              title={GRAVITY_LABELS[gravity]}
-              color={DIMENSION_COLORS[gravity]}
-              showTitle={false}
-            />
-          </div>
-        ))}
-      </TabsContent>
-    </Tabs>
+    </div>
   );
 }
