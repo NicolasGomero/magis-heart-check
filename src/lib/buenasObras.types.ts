@@ -91,6 +91,39 @@ export interface BuenaObraNote {
   cycleHidden?: boolean;
 }
 
+// ========== Manifestation for BuenaObra ==========
+
+export type BuenaObraManifestacion = 'externa' | 'interna';
+
+export const MANIFESTACION_LABELS: Record<BuenaObraManifestacion, string> = {
+  externa: 'Externa',
+  interna: 'Interna',
+};
+
+// Reset cycle (same as Sin)
+export type ResetCycle = 'no' | 'diario' | 'semanal' | 'mensual' | 'anual' | 'personalizado';
+
+export const RESET_CYCLE_LABELS: Record<ResetCycle, string> = {
+  no: 'No',
+  diario: 'Diario',
+  semanal: 'Semanal',
+  mensual: 'Mensual',
+  anual: 'Anual',
+  personalizado: 'Personalizado',
+};
+
+// Color palettes
+export const COLOR_PALETTES = [
+  'blue',
+  'green', 
+  'purple',
+  'orange',
+  'pink',
+  'teal',
+] as const;
+
+export type ColorPalette = typeof COLOR_PALETTES[number];
+
 // ========== Main BuenaObra Entity ==========
 
 export interface BuenaObra {
@@ -102,10 +135,15 @@ export interface BuenaObra {
   extraInfo: string;
   tags: string[];
   
-  // B) Clasificación
-  category: string[]; // multi, editable
-  theologicalAxis: string[]; // multi, editable
-  relatedVirtues: string[]; // multi, editable
+  // B) Clasificación - ahora separada por tipo de virtud
+  terms: BuenaObraTerm[];
+  virtudesTeologales: string[];
+  virtudesCardinales: string[];
+  virtudesAnexas: string[];
+  vows: string[];
+  capitalSins: string[];
+  mediosEspirituales: string[];
+  manifestaciones: BuenaObraManifestacion[];
   
   // C) Contexto sugerido
   involvedPersonTypes: string[]; // IDs de PersonType
@@ -114,33 +152,33 @@ export interface BuenaObra {
   // D) Condicionantes
   condicionantes: string[]; // para amplificación selectiva
   
-  // E) Coste/cantidad
-  sacrificioRelativo: SacrificioRelativo;
-  timeEstimateMin?: number; // minutos estimados
-  visibility?: string; // opcional
-  
-  // F) Ponderación interna (avanzado)
-  baseGoodOverride?: number;
+  // E) Configuración de examen
+  purityOfIntention: PurityOfIntention; // valor por defecto cuando se registra
+  showPurityInExam: boolean; // si mostrar selector en examen
   unitPerTap: number;
-  maxPerSession?: number;
+  resetCycle: ResetCycle;
+  colorPalette: ColorPalette;
+  isDisabled: boolean;
   
   // G) Notas
   notes: BuenaObraNote[];
   
-  // Purity of intention config
-  purityOfIntention: PurityOfIntention; // valor por defecto cuando se registra
-  showPurityInExam: boolean; // si mostrar selector en examen
-  
   // Legacy fields (for compatibility)
-  terms: BuenaObraTerm[]; // mapped from theologicalAxis
-  virtues: string[]; // alias for relatedVirtues
-  spiritualAspects: string[]; // deprecated, use category
+  category: string[];
+  theologicalAxis: string[];
+  relatedVirtues: string[];
+  virtues: string[];
+  spiritualAspects: string[];
+  sacrificioRelativo: SacrificioRelativo;
+  timeEstimateMin?: number;
+  visibility?: string;
+  baseGoodOverride?: number;
+  maxPerSession?: number;
   
   // Metadata
   createdAt: number;
   updatedAt: number;
   isDefault?: boolean;
-  isDisabled?: boolean;
 }
 
 // ========== Defaults aplicados en examen (no configurables en pantalla) ==========
@@ -167,22 +205,32 @@ export function createDefaultBuenaObra(id: string): BuenaObra {
     shortDescription: '',
     extraInfo: '',
     tags: [],
-    category: [],
-    theologicalAxis: [],
-    relatedVirtues: [],
+    terms: [],
+    virtudesTeologales: [],
+    virtudesCardinales: [],
+    virtudesAnexas: [],
+    vows: [],
+    capitalSins: [],
+    mediosEspirituales: [],
+    manifestaciones: [],
     involvedPersonTypes: [],
     associatedActivities: [],
     condicionantes: [],
-    sacrificioRelativo: 'medio',
-    unitPerTap: 1,
-    notes: [],
     purityOfIntention: 'virtual',
     showPurityInExam: false,
-    terms: [],
+    unitPerTap: 1,
+    resetCycle: 'no',
+    colorPalette: 'blue',
+    isDisabled: false,
+    notes: [],
+    // Legacy fields
+    category: [],
+    theologicalAxis: [],
+    relatedVirtues: [],
     virtues: [],
     spiritualAspects: [],
+    sacrificioRelativo: 'medio',
     createdAt: now,
     updatedAt: now,
-    isDisabled: false,
   };
 }

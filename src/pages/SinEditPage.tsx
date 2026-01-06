@@ -655,7 +655,7 @@ export function SinEditPage() {
           />
           
           <MultiSelect
-            label="Condicionantes compatibles"
+            label="CONDICIONANTES COMPATIBLES"
             options={getAllCondicionantes().map(v => ({ value: v, label: v }))}
             selected={sin.condicionantes}
             onChange={(v) => updateField('condicionantes', v)}

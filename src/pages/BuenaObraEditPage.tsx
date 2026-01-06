@@ -8,24 +8,22 @@ import { getPersonTypes, getActivities } from "@/lib/entities";
 import {
   createDefaultBuenaObra,
   BUENA_OBRA_TERM_LABELS,
-  SACRIFICIO_LABELS,
   PURITY_LABELS,
-  DEFAULT_CATEGORIES,
-  DEFAULT_THEOLOGICAL_AXES,
-  DEFAULT_BUENA_OBRA_VIRTUES,
+  MANIFESTACION_LABELS,
+  RESET_CYCLE_LABELS,
+  COLOR_PALETTES,
   type BuenaObraTerm,
-  type SacrificioRelativo,
   type PurityOfIntention,
+  type BuenaObraManifestacion,
+  type ResetCycle,
+  type ColorPalette,
   type BuenaObra,
 } from "@/lib/buenasObras.types";
-import { getAllCondicionantes } from "@/lib/preferences";
+import { VIRTUES_TEOLOGALES, VIRTUES_CARDINALES, DEFAULT_CAPITAL_SINS, DEFAULT_VOWS } from "@/lib/sins.types";
+import { VIRTUDES_ANEXAS_PRINCIPALES } from "@/lib/virtudesAnexas";
+import { MEDIOS_ESPIRITUALES_INICIAL, ALL_MEDIOS_ESPIRITUALES } from "@/lib/mediosEspirituales";
+import { getAllCondicionantes } from "@/lib/condicionantes";
 import { cn } from "@/lib/utils";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 
 // ========== Multi-select Component ==========
 
@@ -159,6 +157,104 @@ function SingleSelect<T extends string>({
   );
 }
 
+// ========== Navigable Multi-select Component ==========
+
+interface NavigableMultiSelectProps {
+  label: string;
+  initialOptions: string[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+  navigateTo: string;
+  allowCustom?: boolean;
+}
+
+function NavigableMultiSelect({
+  label,
+  initialOptions,
+  selected,
+  onChange,
+  navigateTo,
+  allowCustom = false,
+}: NavigableMultiSelectProps) {
+  const navigate = useNavigate();
+  const [customValue, setCustomValue] = useState('');
+  
+  const toggle = (value: string) => {
+    if (selected.includes(value)) {
+      onChange(selected.filter(v => v !== value));
+    } else {
+      onChange([...selected, value]);
+    }
+  };
+  
+  const addCustom = () => {
+    if (customValue.trim() && !selected.includes(customValue.trim())) {
+      onChange([...selected, customValue.trim()]);
+      setCustomValue('');
+    }
+  };
+  
+  // Combine initial options with any selected values not in initial
+  const allVisibleOptions = [
+    ...initialOptions,
+    ...selected.filter(s => !initialOptions.includes(s))
+  ];
+  
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="text-ios-caption text-muted-foreground uppercase tracking-wide">
+          {label}
+        </label>
+        <button
+          type="button"
+          onClick={() => navigate(navigateTo, { state: { selected, returnPath: window.location.pathname } })}
+          className="text-accent text-ios-subhead flex items-center gap-1"
+        >
+          Ver más
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {allVisibleOptions.map(opt => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => toggle(opt)}
+            className={cn(
+              "py-1.5 px-3 rounded-full text-ios-subhead transition-colors",
+              selected.includes(opt)
+                ? "bg-accent text-accent-foreground"
+                : "bg-card border border-border text-foreground active:bg-muted/50"
+            )}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+      {allowCustom && (
+        <div className="flex gap-2 mt-2">
+          <input
+            type="text"
+            value={customValue}
+            onChange={(e) => setCustomValue(e.target.value)}
+            placeholder="Añadir nuevo..."
+            className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-ios-subhead text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-accent/50"
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustom())}
+          />
+          <button
+            type="button"
+            onClick={addCustom}
+            className="px-3 py-2 bg-accent text-accent-foreground rounded-lg"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ========== Main Component ==========
 
 export function BuenaObraEditPage() {
@@ -170,7 +266,12 @@ export function BuenaObraEditPage() {
     if (isNew) {
       return createDefaultBuenaObra('temp');
     }
-    return getBuenaObra(id!) || createDefaultBuenaObra('temp');
+    const existing = getBuenaObra(id!);
+    if (existing) {
+      // Merge with defaults to ensure all new fields exist
+      return { ...createDefaultBuenaObra(id!), ...existing };
+    }
+    return createDefaultBuenaObra('temp');
   });
   
   const [personTypes] = useState(getPersonTypes);
@@ -224,270 +325,261 @@ export function BuenaObraEditPage() {
       />
       
       <div className="p-4 space-y-6">
-        {/* A) Identidad */}
-        <section className="space-y-4">
-          <h2 className="text-ios-headline text-foreground">Identidad</h2>
-          
-          <div>
-            <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
-              Nombre *
-            </label>
-            <input
-              value={buenaObra.name}
-              onChange={(e) => updateField('name', e.target.value)}
-              placeholder="Nombre de la buena obra"
-              className="w-full bg-card border border-border rounded-xl p-4 text-ios-body text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-accent/50"
-            />
-          </div>
-          
-          <div>
-            <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
-              Descripción corta
-            </label>
-            <input
-              value={buenaObra.shortDescription}
-              onChange={(e) => updateField('shortDescription', e.target.value)}
-              placeholder="Breve descripción"
-              className="w-full bg-card border border-border rounded-xl p-4 text-ios-body text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-accent/50"
-            />
-          </div>
-          
-          <div>
-            <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
-              Información adicional
-            </label>
-            <textarea
-              value={buenaObra.extraInfo}
-              onChange={(e) => updateField('extraInfo', e.target.value)}
-              placeholder="Información extendida..."
-              rows={3}
-              className="w-full bg-card border border-border rounded-xl p-4 text-ios-body text-foreground placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:ring-2 focus:ring-accent/50"
-            />
-          </div>
-          
-          <MultiSelect
-            label="Etiquetas"
-            options={[]}
-            selected={buenaObra.tags}
-            onChange={(v) => updateField('tags', v)}
-            allowCustom
+        {/* 1. Nombre */}
+        <div>
+          <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
+            Nombre *
+          </label>
+          <input
+            value={buenaObra.name}
+            onChange={(e) => updateField('name', e.target.value)}
+            placeholder="Nombre de la buena obra"
+            className="w-full bg-card border border-border rounded-xl p-4 text-ios-body text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-accent/50"
           />
-        </section>
+        </div>
         
-        {/* B) Clasificación */}
-        <section className="space-y-4">
-          <h2 className="text-ios-headline text-foreground">Clasificación</h2>
-          
-          <MultiSelect
-            label="Categoría"
-            options={DEFAULT_CATEGORIES.map(c => ({ value: c, label: c }))}
-            selected={buenaObra.category}
-            onChange={(v) => updateField('category', v)}
-            allowCustom
+        {/* 2. Descripción corta */}
+        <div>
+          <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
+            Descripción corta
+          </label>
+          <input
+            value={buenaObra.shortDescription}
+            onChange={(e) => updateField('shortDescription', e.target.value)}
+            placeholder="Breve descripción"
+            className="w-full bg-card border border-border rounded-xl p-4 text-ios-body text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-accent/50"
           />
-          
-          <MultiSelect
-            label="Eje teológico"
-            options={DEFAULT_THEOLOGICAL_AXES.map(a => ({ value: a, label: a }))}
-            selected={buenaObra.theologicalAxis}
-            onChange={(v) => updateField('theologicalAxis', v)}
-            allowCustom
-          />
-          
-          <MultiSelect
-            label="Virtudes relacionadas"
-            options={DEFAULT_BUENA_OBRA_VIRTUES.map(v => ({ value: v, label: v }))}
-            selected={buenaObra.relatedVirtues}
-            onChange={(v) => updateField('relatedVirtues', v)}
-            allowCustom
-          />
-        </section>
+        </div>
         
-        {/* C) Contexto sugerido */}
-        <section className="space-y-4">
-          <h2 className="text-ios-headline text-foreground">Contexto sugerido</h2>
-          
-          <MultiSelect
-            label="Prójimo implicado"
-            options={personTypes.map(p => ({ value: p.id, label: p.name }))}
-            selected={buenaObra.involvedPersonTypes}
-            onChange={(v) => updateField('involvedPersonTypes', v)}
+        {/* 3. Información adicional */}
+        <div>
+          <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
+            Información adicional
+          </label>
+          <textarea
+            value={buenaObra.extraInfo}
+            onChange={(e) => updateField('extraInfo', e.target.value)}
+            placeholder="Información extendida..."
+            rows={3}
+            className="w-full bg-card border border-border rounded-xl p-4 text-ios-body text-foreground placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:ring-2 focus:ring-accent/50"
           />
-          
-          <MultiSelect
-            label="Actividades asociadas"
-            options={activities.map(a => ({ value: a.id, label: a.name }))}
-            selected={buenaObra.associatedActivities}
-            onChange={(v) => updateField('associatedActivities', v)}
-          />
-        </section>
+        </div>
         
-        {/* D) Condicionantes */}
-        <section className="space-y-4">
-          <h2 className="text-ios-headline text-foreground">Condicionantes</h2>
-          <p className="text-ios-caption text-muted-foreground -mt-2">
-            Marcar con qué condicionantes del sujeto es compatible (amplificación selectiva)
-          </p>
-          
-          <MultiSelect
-            label="Condicionantes compatibles"
-            options={getAllCondicionantes().map(c => ({ value: c, label: c }))}
-            selected={buenaObra.condicionantes}
-            onChange={(v) => updateField('condicionantes', v)}
-            allowCustom
-          />
-        </section>
+        {/* 4. Término */}
+        <MultiSelect
+          label="Término"
+          options={Object.entries(BUENA_OBRA_TERM_LABELS).map(([value, label]) => ({
+            value: value as BuenaObraTerm,
+            label,
+          }))}
+          selected={buenaObra.terms}
+          onChange={(v) => updateField('terms', v)}
+        />
         
-        {/* E) Coste/cantidad */}
-        <section className="space-y-4">
-          <h2 className="text-ios-headline text-foreground">Coste / cantidad</h2>
-          
-          <SingleSelect
-            label="Sacrificio relativo"
-            options={Object.entries(SACRIFICIO_LABELS).map(([value, label]) => ({
-              value: value as SacrificioRelativo,
-              label,
-            }))}
-            selected={buenaObra.sacrificioRelativo}
-            onChange={(v) => updateField('sacrificioRelativo', v)}
-          />
-          
+        {/* 5. Prójimo implicado */}
+        <MultiSelect
+          label="Prójimo implicado"
+          options={personTypes.map(p => ({ value: p.id, label: p.name }))}
+          selected={buenaObra.involvedPersonTypes}
+          onChange={(v) => updateField('involvedPersonTypes', v)}
+        />
+        
+        {/* 6. Virtud teologal */}
+        <MultiSelect
+          label="Virtud teologal"
+          options={VIRTUES_TEOLOGALES.map(v => ({ value: v, label: v }))}
+          selected={buenaObra.virtudesTeologales}
+          onChange={(v) => updateField('virtudesTeologales', v)}
+        />
+        
+        {/* 7. Virtud moral cardinal */}
+        <MultiSelect
+          label="Virtud moral cardinal"
+          options={VIRTUES_CARDINALES.map(v => ({ value: v, label: v }))}
+          selected={buenaObra.virtudesCardinales}
+          onChange={(v) => updateField('virtudesCardinales', v)}
+        />
+        
+        {/* 8. Virtud moral anexa (principales) */}
+        <NavigableMultiSelect
+          label="Virtud moral anexa (principales)"
+          initialOptions={VIRTUDES_ANEXAS_PRINCIPALES}
+          selected={buenaObra.virtudesAnexas}
+          onChange={(v) => updateField('virtudesAnexas', v)}
+          navigateTo="/virtudes-anexas"
+          allowCustom
+        />
+        
+        {/* 9. Voto */}
+        <MultiSelect
+          label="Voto"
+          options={DEFAULT_VOWS.map(v => ({ value: v, label: v }))}
+          selected={buenaObra.vows}
+          onChange={(v) => updateField('vows', v)}
+        />
+        
+        {/* 10. Pecado capital */}
+        <MultiSelect
+          label="Pecado capital"
+          options={DEFAULT_CAPITAL_SINS.map(v => ({ value: v, label: v }))}
+          selected={buenaObra.capitalSins}
+          onChange={(v) => updateField('capitalSins', v)}
+        />
+        
+        {/* 11. Medios espirituales */}
+        <NavigableMultiSelect
+          label="Medios espirituales"
+          initialOptions={MEDIOS_ESPIRITUALES_INICIAL}
+          selected={buenaObra.mediosEspirituales}
+          onChange={(v) => updateField('mediosEspirituales', v)}
+          navigateTo="/medios-espirituales"
+          allowCustom
+        />
+        
+        {/* 12. Manifestación */}
+        <MultiSelect
+          label="Manifestación"
+          options={Object.entries(MANIFESTACION_LABELS).map(([value, label]) => ({
+            value: value as BuenaObraManifestacion,
+            label,
+          }))}
+          selected={buenaObra.manifestaciones}
+          onChange={(v) => updateField('manifestaciones', v)}
+        />
+        
+        {/* 13. Condicionantes compatibles */}
+        <MultiSelect
+          label="CONDICIONANTES COMPATIBLES"
+          options={getAllCondicionantes().map(c => ({ value: c, label: c }))}
+          selected={buenaObra.condicionantes}
+          onChange={(v) => updateField('condicionantes', v)}
+          allowCustom
+        />
+        
+        {/* 14. Actividades asociadas */}
+        <MultiSelect
+          label="Actividades asociadas"
+          options={activities.map(a => ({ value: a.id, label: a.name }))}
+          selected={buenaObra.associatedActivities}
+          onChange={(v) => updateField('associatedActivities', v)}
+        />
+        
+        {/* 15. Etiquetas */}
+        <MultiSelect
+          label="Etiquetas"
+          options={[]}
+          selected={buenaObra.tags}
+          onChange={(v) => updateField('tags', v)}
+          allowCustom
+        />
+        
+        {/* 16. Pureza de intención */}
+        <SingleSelect
+          label="Pureza de intención"
+          options={Object.entries(PURITY_LABELS).map(([value, label]) => ({
+            value: value as PurityOfIntention,
+            label,
+          }))}
+          selected={buenaObra.purityOfIntention}
+          onChange={(v) => updateField('purityOfIntention', v)}
+        />
+        
+        {/* 17. Mostrar en examen */}
+        <div className="flex items-center justify-between bg-card border border-border rounded-xl p-4">
           <div>
-            <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
-              Tiempo estimado (minutos)
-            </label>
-            <input
-              type="number"
-              value={buenaObra.timeEstimateMin ?? ''}
-              onChange={(e) => updateField('timeEstimateMin', e.target.value ? parseInt(e.target.value) : undefined)}
-              placeholder="Opcional"
-              min={1}
-              className="w-full bg-card border border-border rounded-xl p-4 text-ios-body text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-accent/50"
-            />
+            <span className="text-ios-body text-foreground">Mostrar en examen</span>
+            <p className="text-ios-caption text-muted-foreground">
+              Permitir seleccionar pureza al registrar
+            </p>
           </div>
-          
-          <div>
-            <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
-              Visibilidad
-            </label>
-            <input
-              value={buenaObra.visibility ?? ''}
-              onChange={(e) => updateField('visibility', e.target.value || undefined)}
-              placeholder="Opcional (ej: Pública, Privada...)"
-              className="w-full bg-card border border-border rounded-xl p-4 text-ios-body text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-accent/50"
-            />
-          </div>
-        </section>
+          <button
+            type="button"
+            onClick={() => updateField('showPurityInExam', !buenaObra.showPurityInExam)}
+            className={cn(
+              "w-12 h-7 rounded-full transition-colors relative",
+              buenaObra.showPurityInExam ? "bg-accent" : "bg-muted"
+            )}
+          >
+            <div className={cn(
+              "absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform",
+              buenaObra.showPurityInExam ? "translate-x-6" : "translate-x-1"
+            )} />
+          </button>
+        </div>
         
-        {/* F) Ponderación interna (avanzado) */}
-        <section className="space-y-4">
-          <h2 className="text-ios-headline text-foreground">Ponderación interna</h2>
-          <p className="text-ios-caption text-muted-foreground -mt-2">
-            Configuración avanzada
-          </p>
-          
-          <div>
-            <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
-              Base good override
-            </label>
-            <input
-              type="number"
-              value={buenaObra.baseGoodOverride ?? ''}
-              onChange={(e) => updateField('baseGoodOverride', e.target.value ? parseInt(e.target.value) : undefined)}
-              placeholder="Dejar vacío para valor automático"
-              className="w-full bg-card border border-border rounded-xl p-4 text-ios-body text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-accent/50"
-            />
-          </div>
-          
-          <div>
-            <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
-              Unidades por toque
-            </label>
-            <input
-              type="number"
-              value={buenaObra.unitPerTap}
-              onChange={(e) => updateField('unitPerTap', parseInt(e.target.value) || 1)}
-              min={1}
-              className="w-full bg-card border border-border rounded-xl p-4 text-ios-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
-            />
-          </div>
-          
-          <div>
-            <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
-              Máximo por sesión
-            </label>
-            <input
-              type="number"
-              value={buenaObra.maxPerSession ?? ''}
-              onChange={(e) => updateField('maxPerSession', e.target.value ? parseInt(e.target.value) : undefined)}
-              placeholder="Sin límite"
-              min={1}
-              className="w-full bg-card border border-border rounded-xl p-4 text-ios-body text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-accent/50"
-            />
-          </div>
-        </section>
-        
-        {/* Purity of intention */}
-        <section className="space-y-4">
-          <h2 className="text-ios-headline text-foreground">Pureza de intención</h2>
-          
-          <SingleSelect
-            label="Valor por defecto"
-            options={Object.entries(PURITY_LABELS).map(([value, label]) => ({
-              value: value as PurityOfIntention,
-              label,
-            }))}
-            selected={buenaObra.purityOfIntention}
-            onChange={(v) => updateField('purityOfIntention', v)}
+        {/* 18. Unidades por toque */}
+        <div>
+          <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
+            Unidades por toque
+          </label>
+          <input
+            type="number"
+            value={buenaObra.unitPerTap}
+            onChange={(e) => updateField('unitPerTap', parseInt(e.target.value) || 1)}
+            min={1}
+            className="w-full bg-card border border-border rounded-xl p-4 text-ios-body text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
           />
-          
-          <div className="flex items-center justify-between bg-card border border-border rounded-xl p-4">
-            <div>
-              <span className="text-ios-body text-foreground">Mostrar en examen</span>
-              <p className="text-ios-caption text-muted-foreground">
-                Permitir seleccionar pureza al registrar
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => updateField('showPurityInExam', !buenaObra.showPurityInExam)}
-              className={cn(
-                "w-12 h-7 rounded-full transition-colors relative",
-                buenaObra.showPurityInExam ? "bg-accent" : "bg-muted"
-              )}
-            >
-              <div className={cn(
-                "absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform",
-                buenaObra.showPurityInExam ? "translate-x-6" : "translate-x-1"
-              )} />
-            </button>
-          </div>
-        </section>
+        </div>
         
-        {/* H) Estado */}
-        <section className="space-y-4">
-          <h2 className="text-ios-headline text-foreground">Estado</h2>
-          
-          <div className="flex items-center justify-between bg-card border border-border rounded-xl p-4">
-            <div>
-              <span className="text-ios-body text-foreground">Deshabilitado</span>
-              <p className="text-ios-caption text-muted-foreground">No aparecerá en exámenes</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => updateField('isDisabled', !buenaObra.isDisabled)}
-              className={cn(
-                "w-12 h-7 rounded-full transition-colors relative",
-                buenaObra.isDisabled ? "bg-destructive" : "bg-muted"
-              )}
-            >
-              <div className={cn(
-                "absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform",
-                buenaObra.isDisabled ? "translate-x-6" : "translate-x-1"
-              )} />
-            </button>
+        {/* 19. Ciclo de reinicio */}
+        <SingleSelect
+          label="Ciclo de reinicio"
+          options={Object.entries(RESET_CYCLE_LABELS).map(([value, label]) => ({
+            value: value as ResetCycle,
+            label,
+          }))}
+          selected={buenaObra.resetCycle}
+          onChange={(v) => updateField('resetCycle', v)}
+        />
+        
+        {/* 20. Paleta de colores */}
+        <div>
+          <label className="text-ios-caption text-muted-foreground uppercase tracking-wide block mb-2">
+            Paleta de colores
+          </label>
+          <div className="flex flex-wrap gap-3">
+            {COLOR_PALETTES.map(palette => (
+              <button
+                key={palette}
+                type="button"
+                onClick={() => updateField('colorPalette', palette)}
+                className={cn(
+                  "w-10 h-10 rounded-full border-2 transition-all",
+                  palette === 'blue' && "bg-blue-500",
+                  palette === 'green' && "bg-green-500",
+                  palette === 'purple' && "bg-purple-500",
+                  palette === 'orange' && "bg-orange-500",
+                  palette === 'pink' && "bg-pink-500",
+                  palette === 'teal' && "bg-teal-500",
+                  buenaObra.colorPalette === palette
+                    ? "border-foreground scale-110"
+                    : "border-transparent"
+                )}
+              />
+            ))}
           </div>
-        </section>
+        </div>
+        
+        {/* 21. Deshabilitado */}
+        <div className="flex items-center justify-between bg-card border border-border rounded-xl p-4">
+          <div>
+            <span className="text-ios-body text-foreground">Deshabilitado</span>
+            <p className="text-ios-caption text-muted-foreground">No aparecerá en exámenes</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => updateField('isDisabled', !buenaObra.isDisabled)}
+            className={cn(
+              "w-12 h-7 rounded-full transition-colors relative",
+              buenaObra.isDisabled ? "bg-destructive" : "bg-muted"
+            )}
+          >
+            <div className={cn(
+              "absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform",
+              buenaObra.isDisabled ? "translate-x-6" : "translate-x-1"
+            )} />
+          </button>
+        </div>
         
         {/* Save button */}
         <button
