@@ -401,6 +401,8 @@ export interface TrajectoryData {
   variation: VariationResult | null;
   contributionPercent?: number; // % of total
   itemDetails?: ItemDetail[];
+  sinDetails?: ItemDetail[];
+  buenaObraDetails?: ItemDetail[];
 }
 
 type GranularityType = 'day' | 'week';
@@ -433,7 +435,8 @@ export function calculateSinTrajectory(
   enrichedEvents: EnrichedSinEvent[],
   periodConfig: PeriodConfig,
   previousPeriodEvents?: EnrichedSinEvent[],
-  totalNegativePoints?: number
+  totalNegativePoints?: number,
+  boEventsForDetails?: EnrichedBuenaObraEvent[]
 ): TrajectoryData {
   const periodDays = (periodConfig.endDate - periodConfig.startDate) / (1000 * 60 * 60 * 24);
   const granularity = getGranularity(periodDays);
@@ -491,12 +494,54 @@ export function calculateSinTrajectory(
     contributionPercent = Math.round((totalScore / totalNegativePoints * 100) * 10) / 10;
   }
   
+  // Build sinDetails aggregated by sinId
+  const sinDetailsMap = new Map<string, ItemDetail>();
+  for (const e of periodEvents) {
+    const existing = sinDetailsMap.get(e.sin.id);
+    if (existing) {
+      existing.count += e.event.countIncrement;
+      existing.points += e.score;
+    } else {
+      sinDetailsMap.set(e.sin.id, {
+        id: e.sin.id,
+        name: e.sin.name,
+        count: e.event.countIncrement,
+        points: e.score,
+      });
+    }
+  }
+  const sinDetails = Array.from(sinDetailsMap.values()).sort((a, b) => b.points - a.points);
+  
+  // Build buenaObraDetails if provided
+  let buenaObraDetails: ItemDetail[] | undefined;
+  if (boEventsForDetails) {
+    const boDetailsMap = new Map<string, ItemDetail>();
+    for (const e of boEventsForDetails) {
+      if (e.event.timestamp < periodConfig.startDate || e.event.timestamp > periodConfig.endDate) continue;
+      const existing = boDetailsMap.get(e.buenaObra.id);
+      if (existing) {
+        existing.count += e.event.countIncrement;
+        existing.points += e.score;
+      } else {
+        boDetailsMap.set(e.buenaObra.id, {
+          id: e.buenaObra.id,
+          name: e.buenaObra.name,
+          count: e.event.countIncrement,
+          points: e.score,
+        });
+      }
+    }
+    buenaObraDetails = Array.from(boDetailsMap.values()).sort((a, b) => b.points - a.points);
+  }
+  
   return {
     points,
     totalScore,
     eventCount,
     variation,
     contributionPercent,
+    sinDetails,
+    buenaObraDetails,
   };
 }
 
@@ -635,8 +680,8 @@ export function calculateMetrics(
   const totalTrajectories: TotalTrajectories = {
     grade: calculateGradeTrajectory(sessions, sins, buenasObras, periodConfig, previousPeriodConfig),
     buenasObras: calculateBuenaObraTrajectory(boEvents, periodConfig),
-    mortalSins: calculateSinTrajectory(mortalEvents, periodConfig, prevMortalEvents),
-    venialSins: calculateSinTrajectory(venialEvents, periodConfig, prevVenialEvents),
+    mortalSins: calculateSinTrajectory(mortalEvents, periodConfig, prevMortalEvents, undefined, boEvents),
+    venialSins: calculateSinTrajectory(venialEvents, periodConfig, prevVenialEvents, undefined, boEvents),
   };
   
   // === Trajectories by dimension ===
@@ -675,7 +720,7 @@ export function calculateMetrics(
   for (const term of ['contra_dios', 'contra_projimo', 'contra_si_mismo'] as Term[]) {
     const events = sinEvents.filter(e => e.sin.terms.includes(term));
     const prevEvents = previousSinEvents.filter(e => e.sin.terms.includes(term));
-    byTerm.set(term, calculateSinTrajectory(events, periodConfig, prevEvents, totalNegative));
+    byTerm.set(term, calculateSinTrajectory(events, periodConfig, prevEvents, totalNegative, boEvents));
   }
   
   // By PersonType
@@ -684,7 +729,7 @@ export function calculateMetrics(
     const events = sinEvents.filter(e => e.sin.involvedPersonTypes.includes(pt.id));
     const prevEvents = previousSinEvents.filter(e => e.sin.involvedPersonTypes.includes(pt.id));
     if (events.length > 0 || prevEvents.length > 0) {
-      byPersonType.set(pt.id, calculateSinTrajectory(events, periodConfig, prevEvents, totalNegative));
+      byPersonType.set(pt.id, calculateSinTrajectory(events, periodConfig, prevEvents, totalNegative, boEvents));
     }
   }
   
@@ -693,7 +738,7 @@ export function calculateMetrics(
   for (const gravity of ['mortal', 'venial'] as Gravity[]) {
     const events = sinEvents.filter(e => e.sin.gravities.includes(gravity));
     const prevEvents = previousSinEvents.filter(e => e.sin.gravities.includes(gravity));
-    byGravity.set(gravity, calculateSinTrajectory(events, periodConfig, prevEvents, totalNegative));
+    byGravity.set(gravity, calculateSinTrajectory(events, periodConfig, prevEvents, totalNegative, boEvents));
   }
   
   // By Capital Sin
@@ -969,8 +1014,11 @@ function calculateBuenaObraTrajectory(
     }
   }
   
-  for (const e of boEvents) {
-    if (e.event.timestamp < periodConfig.startDate || e.event.timestamp > periodConfig.endDate) continue;
+  const periodBoEvents = boEvents.filter(
+    e => e.event.timestamp >= periodConfig.startDate && e.event.timestamp <= periodConfig.endDate
+  );
+  
+  for (const e of periodBoEvents) {
     const key = getBucketKey(e.event.timestamp, granularity);
     const bucket = buckets.get(key) || { score: 0, count: 0, timestamp: e.event.timestamp };
     bucket.score += e.score;
@@ -987,14 +1035,31 @@ function calculateBuenaObraTrajectory(
       eventCount: bucket.count,
     }));
   
-  const totalScore = boEvents
-    .filter(e => e.event.timestamp >= periodConfig.startDate && e.event.timestamp <= periodConfig.endDate)
-    .reduce((sum, e) => sum + e.score, 0);
+  const totalScore = periodBoEvents.reduce((sum, e) => sum + e.score, 0);
+  
+  // Build buenaObraDetails
+  const boDetailsMap = new Map<string, ItemDetail>();
+  for (const e of periodBoEvents) {
+    const existing = boDetailsMap.get(e.buenaObra.id);
+    if (existing) {
+      existing.count += e.event.countIncrement;
+      existing.points += e.score;
+    } else {
+      boDetailsMap.set(e.buenaObra.id, {
+        id: e.buenaObra.id,
+        name: e.buenaObra.name,
+        count: e.event.countIncrement,
+        points: e.score,
+      });
+    }
+  }
+  const buenaObraDetails = Array.from(boDetailsMap.values()).sort((a, b) => b.points - a.points);
   
   return {
     points,
     totalScore,
-    eventCount: boEvents.length,
+    eventCount: periodBoEvents.length,
     variation: null,
+    buenaObraDetails,
   };
 }

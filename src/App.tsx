@@ -19,6 +19,7 @@ import BackupPage from "@/pages/BackupPage";
 import VirtudesAnexasPage from "@/pages/VirtudesAnexasPage";
 import MediosEspiritualesPage from "@/pages/MediosEspiritualesPage";
 import NotasPage from "@/pages/NotasPage";
+import ChartDetailPage from "@/pages/ChartDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => (
           <Route path="/virtudes-anexas" element={<VirtudesAnexasPage />} />
           <Route path="/medios-espirituales" element={<MediosEspiritualesPage />} />
           <Route path="/notas/:id" element={<NotasPage />} />
+          <Route path="/avance/detalle" element={<ChartDetailPage />} />
           
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
