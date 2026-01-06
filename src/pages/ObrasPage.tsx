@@ -38,7 +38,7 @@ export default function ObrasPage() {
                 <Icon className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-ios-body font-medium text-foreground">{label}</p>
+                <p className="text-ios-body font-medium text-foreground pt-0">{label}</p>
                 <p className="text-ios-caption text-muted-foreground">{description}</p>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
