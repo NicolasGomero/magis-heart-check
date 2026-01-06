@@ -133,21 +133,9 @@ export const DEFAULT_SPIRITUAL_MEANS = [
 // Legacy alias
 export const DEFAULT_SPIRITUAL_ASPECTS = DEFAULT_SPIRITUAL_MEANS;
 
-// Condicionantes del sujeto
-export const DEFAULT_CONDICIONANTES = [
-  'Fatiga',
-  'Enfermedad',
-  'Estrés',
-  'Falta de sueño',
-  'Hambre',
-  'Prisa',
-  'Miedo',
-  'Ira previa',
-  'Tristeza',
-  'Soledad',
-  'Tentación fuerte',
-  'Costumbre arraigada',
-];
+// Condicionantes - NOW IMPORTED FROM UNIFIED MODULE
+// Re-export for backwards compatibility
+export { SEED_CONDICIONANTES as DEFAULT_CONDICIONANTES } from './condicionantes';
 
 // ========== Note Interface ==========
 

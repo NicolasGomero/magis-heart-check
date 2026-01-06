@@ -15,7 +15,8 @@ import {
   getExamSessions
 } from "@/lib/examSessions";
 import { getSins, createSin } from "@/lib/sins.storage";
-import { getPreferences, calculateCondicionantesFactor } from "@/lib/preferences";
+import { getPreferences } from "@/lib/preferences";
+import { calculateCondicionantesFactor } from "@/lib/condicionantes";
 import { Check, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Sin, Term, ResetCycle } from "@/lib/sins.types";

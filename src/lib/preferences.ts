@@ -14,19 +14,11 @@ export interface SleepWindow {
 
 // ========== Subject Profile ==========
 
-export const DEFAULT_SUBJECT_CONDICIONANTES = [
-  'Inmadurez afectiva',
-  'Trastornos psíquicos',
-  'Educación gravemente deficiente',
-  'Contextos culturales deformados',
-  'Estados prolongados de estrés o sufrimiento',
-  'Hábito arraigado o adicción',
-  'Economía doméstica precaria',
-  'Crisis económica',
-  'Excesiva carga laboral justificada',
-  'Salud crónica',
-  'Temperamento desfavorable',
-];
+// Import from unified condicionantes module
+import { SEED_CONDICIONANTES, getAllCondicionantes as getCondicionantesFromModule, calculateCondicionantesFactor as calcCondFactor, migrateCondicionantes } from './condicionantes';
+
+// Re-export for backwards compatibility
+export const DEFAULT_SUBJECT_CONDICIONANTES = [...SEED_CONDICIONANTES];
 
 export interface SubjectProfile {
   condicionantesActivos: string[]; // Active condicionantes of the subject
@@ -173,35 +165,27 @@ export function savePreferences(prefs: Partial<UserPreferences>): UserPreference
 
 // ========== Condicionantes Compatibility Logic ==========
 
-/**
- * Calculate condicionantes factor for scoring
- * @param subjectCondicionantes - Active condicionantes of the subject
- * @param itemCondicionantes - Compatible condicionantes of the item (Sin or BuenaObra)
- * @param type - 'sin' for attenuation (0.80^k), 'buenaObra' for amplification (1.20^k)
- */
-export function calculateCondicionantesFactor(
-  subjectCondicionantes: string[],
-  itemCondicionantes: string[],
-  type: 'sin' | 'buenaObra'
-): { appliedCondicionantes: string[]; k: number; factor: number } {
-  // Intersection between subject's active condicionantes and item's compatible condicionantes
-  const appliedCondicionantes = subjectCondicionantes.filter(c => 
-    itemCondicionantes.includes(c)
-  );
-  
-  const k = appliedCondicionantes.length;
-  
-  // Base factor: 0.80 for sins (attenuation), 1.20 for buenas obras (amplification)
-  const baseFactor = type === 'sin' ? 0.80 : 1.20;
-  const factor = Math.pow(baseFactor, k);
-  
-  return { appliedCondicionantes, k, factor };
-}
+// Re-export from unified module
+export const calculateCondicionantesFactor = calcCondFactor;
 
 // Get all available condicionantes (default + custom)
 export function getAllCondicionantes(): string[] {
   const prefs = getPreferences();
-  return [...DEFAULT_SUBJECT_CONDICIONANTES, ...prefs.subjectProfile.customCondicionantes];
+  return getCondicionantesFromModule(prefs.subjectProfile.customCondicionantes);
+}
+
+// Migrate condicionantes in user profile if needed
+export function migrateUserCondicionantes(): void {
+  const prefs = getPreferences();
+  const migrated = migrateCondicionantes(prefs.subjectProfile.condicionantesActivos);
+  if (JSON.stringify(migrated) !== JSON.stringify(prefs.subjectProfile.condicionantesActivos)) {
+    savePreferences({
+      subjectProfile: {
+        ...prefs.subjectProfile,
+        condicionantesActivos: migrated,
+      }
+    });
+  }
 }
 
 export function applyTheme(theme: ThemeMode): void {

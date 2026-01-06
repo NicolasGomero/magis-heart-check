@@ -78,18 +78,9 @@ export const DEFAULT_BUENA_OBRA_VIRTUES = [
   'Pobreza',
 ];
 
-export const DEFAULT_BUENA_OBRA_CONDICIONANTES = [
-  'Fatiga',
-  'Enfermedad',
-  'Estrés',
-  'Falta de sueño',
-  'Hambre',
-  'Prisa',
-  'Miedo',
-  'Tentación fuerte',
-  'Dificultad externa',
-  'Incomprensión',
-];
+// Condicionantes - NOW IMPORTED FROM UNIFIED MODULE
+// Re-export for backwards compatibility
+export { SEED_CONDICIONANTES as DEFAULT_BUENA_OBRA_CONDICIONANTES } from './condicionantes';
 
 // ========== Note Interface ==========
 

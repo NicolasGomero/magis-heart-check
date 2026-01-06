@@ -18,7 +18,6 @@ import {
   VIRTUES_CARDINALES,
   DEFAULT_CAPITAL_SINS,
   DEFAULT_VOWS,
-  DEFAULT_CONDICIONANTES,
   COLOR_PALETTES,
   deduceAdmiteParvedad,
   type Term,
@@ -32,6 +31,7 @@ import {
 } from "@/lib/sins.types";
 import { VIRTUDES_ANEXAS_INICIAL, ALL_VIRTUDES_ANEXAS } from "@/lib/virtudesAnexas";
 import { MEDIOS_ESPIRITUALES_INICIAL, ALL_MEDIOS_ESPIRITUALES } from "@/lib/mediosEspirituales";
+import { getAllCondicionantes } from "@/lib/preferences";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -655,8 +655,8 @@ export function SinEditPage() {
           />
           
           <MultiSelect
-            label="Condicionantes"
-            options={DEFAULT_CONDICIONANTES.map(v => ({ value: v, label: v }))}
+            label="Condicionantes compatibles"
+            options={getAllCondicionantes().map(v => ({ value: v, label: v }))}
             selected={sin.condicionantes}
             onChange={(v) => updateField('condicionantes', v)}
             allowCustom

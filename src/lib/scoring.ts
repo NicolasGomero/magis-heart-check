@@ -3,7 +3,8 @@
 
 import { Sin, Term, Gravity, MateriaTipo, Manifestation } from './sins.types';
 import { SinEvent, AttentionLevel, MotiveType, ResponsibilityType, OptionalFlags } from './types';
-import { getPreferences, calculateCondicionantesFactor } from './preferences';
+import { getPreferences } from './preferences';
+import { calculateCondicionantesFactor } from './condicionantes';
 
 // ========== Constants ==========
 
