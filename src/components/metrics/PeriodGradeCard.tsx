@@ -23,7 +23,7 @@ export function PeriodGradeCard({ grade }: PeriodGradeCardProps) {
     <div className="bg-card rounded-2xl p-6 border border-border">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-ios-caption text-muted-foreground mb-1">Nota del periodo</p>
+          <p className="text-ios-caption text-muted-foreground mb-1">Calificación del periodo</p>
           <div className="flex items-center gap-3">
             {grade.passed ? (
               <CheckCircle2 className="h-8 w-8 text-green-500" />
@@ -128,25 +128,9 @@ export function PeriodGradeCard({ grade }: PeriodGradeCardProps) {
       <div className="flex items-start gap-2 p-3 bg-muted/30 rounded-lg mt-4">
         <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
         <p className="text-ios-caption text-muted-foreground">
-          La nota parte de 10. Los puntos negativos restan; los positivos solo suman si hubo descuentos. 
+          La calificación parte de 10. Los puntos negativos restan; los positivos solo suman si hubo descuentos. 
           Con pecado mortal imputable, máximo 4.9.
         </p>
-      </div>
-
-      {/* Stats summary */}
-      <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-border">
-        <div className="text-center">
-          <p className="text-lg font-semibold text-foreground">{grade.mortalCount}</p>
-          <p className="text-ios-caption text-muted-foreground">Mortales</p>
-        </div>
-        <div className="text-center">
-          <p className="text-lg font-semibold text-foreground">{grade.aggregationsCrossed}</p>
-          <p className="text-ios-caption text-muted-foreground">Acumulaciones</p>
-        </div>
-        <div className="text-center">
-          <p className="text-lg font-semibold text-foreground">{grade.negativePoints.toFixed(0)}</p>
-          <p className="text-ios-caption text-muted-foreground">Pts negativos</p>
-        </div>
       </div>
     </div>
   );
