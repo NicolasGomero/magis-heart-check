@@ -38,7 +38,7 @@ const DEFAULT_ACTIVITIES: Activity[] = [
   { id: 'act-9', name: '🏃 Deporte', isDefault: true },
   { id: 'act-10', name: '🚗 Traslados', isDefault: true },
   { id: 'act-11', name: '🍽️ Comidas', isDefault: true },
-  { id: 'act-16', name: '🤝 Compartir', isDefault: true },
+  { id: 'act-16', name: '☕️ Compartir', isDefault: true },
   { id: 'act-12', name: '📋 Planificación', isDefault: true },
   { id: 'act-13', name: '🧴 Cuidado personal', isDefault: true },
   { id: 'act-14', name: '🏠 Cargos de casa', isDefault: true },
