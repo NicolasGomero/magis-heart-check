@@ -259,6 +259,53 @@ export function getExamState(minutes: number | null): ExamState {
   return 'growth';
 }
 
+// ========== Cross-Session Operations ==========
+
+/**
+ * Remove the most recent event for a specific sin across all sessions
+ * @returns true if an event was removed, false if no events found
+ */
+export function removeLastSinEventForSin(sinId: string): boolean {
+  const sessions = getExamSessions();
+  
+  // Find the most recent event for this sin across all sessions
+  let lastEventInfo: { sessionIndex: number; eventId: string; timestamp: number } | null = null;
+  
+  sessions.forEach((session, sessionIndex) => {
+    for (const event of session.events) {
+      if (event.sinId === sinId) {
+        if (!lastEventInfo || event.timestamp > lastEventInfo.timestamp) {
+          lastEventInfo = { sessionIndex, eventId: event.id, timestamp: event.timestamp };
+        }
+      }
+    }
+  });
+  
+  if (!lastEventInfo) return false;
+  
+  // Remove the event from the session
+  const { sessionIndex, eventId } = lastEventInfo;
+  sessions[sessionIndex].events = sessions[sessionIndex].events.filter(e => e.id !== eventId);
+  saveExamSessions(sessions);
+  
+  // Dispatch event to notify UI components
+  window.dispatchEvent(new CustomEvent('exam-sessions-updated'));
+  
+  return true;
+}
+
+/**
+ * Count total events for a specific sin across all sessions
+ */
+export function getEventCountForSin(sinId: string): number {
+  const sessions = getExamSessions();
+  let count = 0;
+  for (const session of sessions) {
+    count += session.events.filter(e => e.sinId === sinId).length;
+  }
+  return count;
+}
+
 // ========== Analytics ==========
 
 export function getSessionStats(sessionId: string): {
