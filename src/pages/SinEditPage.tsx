@@ -501,7 +501,7 @@ export function SinEditPage() {
     <div className="min-h-screen bg-background pb-8">
       <IOSHeader 
         title={isNew ? "Nuevo pecado" : "Editar pecado"}
-        onBack={() => navigate(-1)}
+        onBack={() => navigate("/obras/pecados")}
         rightAction={
           <button 
             type="button"
