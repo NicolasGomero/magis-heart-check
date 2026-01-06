@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { IOSHeader } from '@/components/IOSHeader';
+import { Link } from 'react-router-dom';
+import { Settings, MessageSquare } from 'lucide-react';
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { PeriodGradeCard } from '@/components/metrics/PeriodGradeCard';
 import { TrajectoryChart } from '@/components/metrics/TrajectoryChart';
@@ -13,7 +14,6 @@ import {
   calculateMetrics,
 } from '@/lib/metricsCalculations';
 import { getExamSessions } from '@/lib/examSessions';
-import { MessageSquare } from 'lucide-react';
 
 export function MetricsPage() {
   const [periodConfig, setPeriodConfig] = useState<PeriodConfig>(getPeriodConfig('7d'));
@@ -29,7 +29,19 @@ export function MetricsPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <IOSHeader title="Avance" />
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="flex items-center justify-between h-11 px-4">
+          <div className="w-10" /> {/* Spacer */}
+          <h1 className="text-ios-headline font-semibold text-foreground">Avance</h1>
+          <Link 
+            to="/settings" 
+            className="text-muted-foreground active:opacity-70 transition-opacity touch-target"
+          >
+            <Settings className="w-6 h-6" />
+          </Link>
+        </div>
+      </header>
       
       <div className="p-4 space-y-6">
         {/* Period Selector */}

@@ -1,4 +1,4 @@
-import { Sparkles, Flame, ChevronRight } from "lucide-react";
+import { Sparkles, Flame, ChevronRight, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -22,8 +22,15 @@ export default function ObrasPage() {
     <div className="flex flex-col min-h-full pb-20">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="flex items-center justify-center h-11 px-4">
+        <div className="flex items-center justify-between h-11 px-4">
+          <div className="w-10" /> {/* Spacer */}
           <h1 className="text-ios-headline font-semibold text-foreground">Obras</h1>
+          <Link 
+            to="/settings" 
+            className="text-muted-foreground active:opacity-70 transition-opacity touch-target"
+          >
+            <Settings className="w-6 h-6" />
+          </Link>
         </div>
       </header>
 

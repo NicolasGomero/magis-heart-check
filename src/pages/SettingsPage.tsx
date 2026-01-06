@@ -371,8 +371,8 @@ export function SettingsPage() {
           </div>
         </SettingsSection>
 
-        {/* PERFIL DEL SUJETO */}
-        <SettingsSection title="Perfil del sujeto">
+        {/* PERFIL DEL USUARIO */}
+        <SettingsSection title="Perfil del usuario">
           <div className="px-4 py-3.5">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
