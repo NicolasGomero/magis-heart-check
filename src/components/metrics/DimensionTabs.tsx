@@ -110,8 +110,6 @@ export function DimensionTabs({ metrics }: DimensionTabsProps) {
       <TabsList className="w-full flex overflow-x-auto no-scrollbar bg-muted/50">
         <TabsTrigger value="term" className="flex-1 min-w-fit text-xs">Término</TabsTrigger>
         <TabsTrigger value="gravity" className="flex-1 min-w-fit text-xs">Gravedad</TabsTrigger>
-        <TabsTrigger value="sin" className="flex-1 min-w-fit text-xs">Pecado</TabsTrigger>
-        <TabsTrigger value="buenaObra" className="flex-1 min-w-fit text-xs">B. Obra</TabsTrigger>
         <TabsTrigger value="more" className="flex-1 min-w-fit text-xs">Más</TabsTrigger>
       </TabsList>
 
@@ -152,68 +150,6 @@ export function DimensionTabs({ metrics }: DimensionTabsProps) {
             />
           </div>
         ))}
-      </TabsContent>
-
-      <TabsContent value="sin" className="space-y-3 mt-4">
-        {Array.from(metrics.bySin.entries())
-          .sort((a, b) => b[1].totalScore - a[1].totalScore)
-          .slice(0, 10)
-          .map(([sinId, data]) => (
-            <div key={sinId} className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-ios-caption text-muted-foreground truncate max-w-[200px]">
-                  {getSinName(sinId)}
-                </span>
-                <ContributionBadge percent={data.contributionPercent} />
-              </div>
-              <TrajectoryChart
-                data={data}
-                title={getSinName(sinId)}
-                showTitle={false}
-              />
-            </div>
-          ))}
-        {metrics.bySin.size === 0 && (
-          <p className="text-ios-body text-muted-foreground text-center py-8">
-            No hay datos para mostrar
-          </p>
-        )}
-        {metrics.bySin.size > 10 && (
-          <p className="text-ios-caption text-muted-foreground text-center">
-            Mostrando los 10 con mayor score
-          </p>
-        )}
-      </TabsContent>
-
-      <TabsContent value="buenaObra" className="space-y-3 mt-4">
-        {Array.from(metrics.byBuenaObra.entries())
-          .sort((a, b) => b[1].totalScore - a[1].totalScore)
-          .slice(0, 10)
-          .map(([boId, data]) => (
-            <div key={boId} className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-ios-caption text-muted-foreground truncate max-w-[200px]">
-                  {getBuenaObraName(boId)}
-                </span>
-                <ContributionBadge percent={data.contributionPercent} />
-              </div>
-              <div className="bg-card rounded-lg p-3 border border-border">
-                <div className="flex items-center justify-between">
-                  <span className="text-ios-body text-foreground">
-                    {data.eventCount} registros
-                  </span>
-                  <span className="text-ios-body font-medium text-green-600 dark:text-green-400">
-                    +{data.totalScore.toFixed(1)} pts
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        {metrics.byBuenaObra.size === 0 && (
-          <p className="text-ios-body text-muted-foreground text-center py-8">
-            No hay datos para mostrar
-          </p>
-        )}
       </TabsContent>
 
       <TabsContent value="more" className="space-y-4 mt-4">

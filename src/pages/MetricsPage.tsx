@@ -6,7 +6,6 @@ import { PeriodGradeCard } from '@/components/metrics/PeriodGradeCard';
 import { TrajectoryChart } from '@/components/metrics/TrajectoryChart';
 import { FilterBuilder } from '@/components/metrics/FilterBuilder';
 import { DimensionTabs } from '@/components/metrics/DimensionTabs';
-import { VariationBadge } from '@/components/metrics/VariationBadge';
 import { 
   PeriodConfig, 
   MetricFilter,
@@ -53,54 +52,37 @@ export function MetricsPage() {
         {/* Total Trajectories (4 series) */}
         <div className="space-y-4">
           <h2 className="text-ios-headline font-semibold text-foreground">
-            Trayectorias totales
+            Tendencias generales
           </h2>
           
           {/* Grade trajectory */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-ios-subhead text-foreground">Nota del periodo</span>
-              {metrics.totalTrajectories.grade.variation && (
-                <VariationBadge variation={metrics.totalTrajectories.grade.variation} />
-              )}
-            </div>
-            <TrajectoryChart 
-              data={metrics.totalTrajectories.grade} 
-              title="Nota histórica"
-              showVariation={false}
-              color="hsl(var(--primary))"
-            />
-          </div>
+          <TrajectoryChart 
+            data={metrics.totalTrajectories.grade} 
+            title="Calificación del periodo"
+            showVariation
+            color="hsl(var(--primary))"
+          />
           
           {/* Buenas obras trajectory */}
-          <div className="space-y-2">
-            <span className="text-ios-subhead text-foreground">Buenas obras</span>
-            <TrajectoryChart 
-              data={metrics.totalTrajectories.buenasObras} 
-              title="Puntos positivos"
-              color="hsl(142, 70%, 45%)"
-            />
-          </div>
+          <TrajectoryChart 
+            data={metrics.totalTrajectories.buenasObras} 
+            title="Buenas obras"
+            color="hsl(142, 70%, 45%)"
+          />
           
           {/* Mortal sins trajectory */}
-          <div className="space-y-2">
-            <span className="text-ios-subhead text-foreground">Pecados mortales</span>
-            <TrajectoryChart 
-              data={metrics.totalTrajectories.mortalSins} 
-              title="Mortales imputables"
-              color="hsl(0, 70%, 50%)"
-            />
-          </div>
+          <TrajectoryChart 
+            data={metrics.totalTrajectories.mortalSins} 
+            title="Pecados mortales"
+            color="hsl(0, 70%, 50%)"
+          />
           
           {/* Venial sins trajectory */}
-          <div className="space-y-2">
-            <span className="text-ios-subhead text-foreground">Pecados veniales</span>
-            <TrajectoryChart 
-              data={metrics.totalTrajectories.venialSins} 
-              title="Veniales"
-              color="hsl(45, 70%, 50%)"
-            />
-          </div>
+          <TrajectoryChart 
+            data={metrics.totalTrajectories.venialSins} 
+            title="Pecados veniales"
+            color="hsl(45, 70%, 50%)"
+          />
         </div>
 
         {/* Filter Builder */}
@@ -123,7 +105,7 @@ export function MetricsPage() {
         {/* Dimension Tabs */}
         <div className="space-y-2">
           <h2 className="text-ios-headline font-semibold text-foreground">
-            Trayectorias por dimensión
+            Tendencias por dimensión
           </h2>
           <DimensionTabs metrics={metrics} />
         </div>
