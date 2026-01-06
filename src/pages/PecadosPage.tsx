@@ -3,6 +3,7 @@ import { Plus, MoreVertical, EyeOff, Eye, Minus, Pencil, Trash2, StickyNote, Che
 import { Link, useNavigate } from "react-router-dom";
 import { IOSHeader } from "@/components/IOSHeader";
 import { getSins, toggleSinDisabled, deleteSin } from "@/lib/sins.storage";
+import { removeLastSinEventForSin, getEventCountForSin } from "@/lib/examSessions";
 import type { Sin, Term, Gravity } from "@/lib/sins.types";
 import { cn } from "@/lib/utils";
 import {
@@ -57,7 +58,20 @@ export default function PecadosPage() {
   };
 
   const handleDiscount = (sinId: string) => {
-    toast.info("Funcionalidad de descontar próximamente");
+    const currentCount = getEventCountForSin(sinId);
+    
+    if (currentCount === 0) {
+      toast.info("No hay registros para descontar");
+      return;
+    }
+    
+    const success = removeLastSinEventForSin(sinId);
+    
+    if (success) {
+      toast.success("Registro descontado");
+    } else {
+      toast.error("No se pudo descontar el registro");
+    }
   };
 
   const handleDelete = (sinId: string, sinName: string) => {
