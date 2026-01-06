@@ -40,11 +40,10 @@ function StateIndicator({
     }
   };
   const config = stateConfig[state];
-  return <div className="mx-4 p-5 rounded-2xl border-2 bg-accent/15 border-accent/30">
+  return <div className={cn("mx-4 p-5 rounded-2xl border-2", config.bg, config.borderColor)}>
       <div className="text-center">
-        <h1 className="font-bold text-amber-600 mb-1 text-5xl">MAGIS</h1>
-        <p className="text-ios-footnote text-muted-foreground mb-3">Mira dentro de ti y dispón tu corazón
-hacia un mayor amor.</p>
+        <h1 className="font-bold text-foreground mb-1 text-5xl">MAGIS</h1>
+        <p className="text-ios-footnote text-muted-foreground mb-3">Mira dentro de ti y dispón tu corazón para un mayor amor a Dios y los demás.</p>
         <p className="text-muted-foreground/70 text-ios-caption">{timeAgo}</p>
       </div>
     </div>;
