@@ -2,6 +2,7 @@
 // Offline-first with localStorage persistence
 
 import type { ExamSession, SinEvent, BuenaObraEvent, FreeformSin, FreeformBuenaObra, UserState } from './types';
+import type { BuenaObra } from './buenasObras.types';
 import { generateId } from './storage';
 
 const STORAGE_KEYS = {
@@ -148,6 +149,61 @@ export function removeSinEvent(sessionId: string, eventId: string): boolean {
   sessions[sessionIndex].events = sessions[sessionIndex].events.filter(e => e.id !== eventId);
   
   if (sessions[sessionIndex].events.length === originalLength) return false;
+  
+  saveExamSessions(sessions);
+  return true;
+}
+
+// ========== BuenaObra Events ==========
+
+export function addBuenaObraEvent(
+  sessionId: string,
+  buenaObraId: string,
+  options?: Partial<Omit<BuenaObraEvent, 'id' | 'buenaObraId' | 'timestamp'>>
+): BuenaObraEvent | null {
+  const sessions = getExamSessions();
+  const index = sessions.findIndex(s => s.id === sessionId);
+  
+  if (index === -1) return null;
+  
+  const event: BuenaObraEvent = {
+    id: generateId(),
+    buenaObraId,
+    timestamp: Date.now(),
+    countIncrement: options?.countIncrement ?? 1,
+    purityOfIntention: options?.purityOfIntention ?? 'virtual',
+    appliedCondicionantes: options?.appliedCondicionantes,
+    condicionantesK: options?.condicionantesK,
+    condicionantesFactor: options?.condicionantesFactor,
+  };
+  
+  // Initialize buenaObraEvents if not present (for backward compatibility)
+  if (!sessions[index].buenaObraEvents) {
+    sessions[index].buenaObraEvents = [];
+  }
+  
+  sessions[index].buenaObraEvents.push(event);
+  saveExamSessions(sessions);
+  
+  return event;
+}
+
+export function removeBuenaObraEvent(sessionId: string, eventId: string): boolean {
+  const sessions = getExamSessions();
+  const sessionIndex = sessions.findIndex(s => s.id === sessionId);
+  
+  if (sessionIndex === -1) return false;
+  
+  // Initialize if not present
+  if (!sessions[sessionIndex].buenaObraEvents) {
+    sessions[sessionIndex].buenaObraEvents = [];
+    return false;
+  }
+  
+  const originalLength = sessions[sessionIndex].buenaObraEvents.length;
+  sessions[sessionIndex].buenaObraEvents = sessions[sessionIndex].buenaObraEvents.filter(e => e.id !== eventId);
+  
+  if (sessions[sessionIndex].buenaObraEvents.length === originalLength) return false;
   
   saveExamSessions(sessions);
   return true;
@@ -307,6 +363,116 @@ export function getEventCountForSin(sinId: string): number {
     count += session.events.filter(e => e.sinId === sinId).length;
   }
   return count;
+}
+
+// ========== Cross-Session Operations for BuenaObra ==========
+
+/**
+ * Remove the most recent event for a specific buena obra across all sessions
+ * @returns true if an event was removed, false if no events found
+ */
+export function removeLastBuenaObraEventForObra(buenaObraId: string): boolean {
+  const sessions = getExamSessions();
+  
+  // Find the most recent event for this obra across COMPLETED sessions only
+  let lastEventInfo: { sessionIndex: number; eventId: string; timestamp: number } | null = null;
+  
+  sessions.forEach((session, sessionIndex) => {
+    if (!session.endedAt) return; // Only search in completed sessions
+    
+    const events = session.buenaObraEvents || [];
+    for (const event of events) {
+      if (event.buenaObraId === buenaObraId) {
+        if (!lastEventInfo || event.timestamp > lastEventInfo.timestamp) {
+          lastEventInfo = { sessionIndex, eventId: event.id, timestamp: event.timestamp };
+        }
+      }
+    }
+  });
+  
+  if (!lastEventInfo) return false;
+  
+  // Remove the event from the session
+  const { sessionIndex, eventId } = lastEventInfo;
+  sessions[sessionIndex].buenaObraEvents = (sessions[sessionIndex].buenaObraEvents || []).filter(e => e.id !== eventId);
+  saveExamSessions(sessions);
+  
+  // Dispatch event to notify UI components
+  window.dispatchEvent(new CustomEvent('exam-sessions-updated'));
+  
+  return true;
+}
+
+/**
+ * Count total events for a specific buena obra across all sessions
+ */
+export function getEventCountForBuenaObra(buenaObraId: string): number {
+  const sessions = getExamSessions();
+  let count = 0;
+  for (const session of sessions) {
+    if (!session.endedAt) continue; // Only count from completed sessions
+    const events = session.buenaObraEvents || [];
+    count += events.filter(e => e.buenaObraId === buenaObraId).length;
+  }
+  return count;
+}
+
+/**
+ * Get persisted count for a buena obra from all completed sessions
+ */
+export function getPersistedCountForBuenaObra(buenaObraId: string, buenaObra: BuenaObra): {
+  count: number;
+  lastEventTime: number | null;
+} {
+  const sessions = getExamSessions();
+  let count = 0;
+  let lastEventTime: number | null = null;
+
+  // Gather all events for this obra from completed sessions
+  for (const session of sessions) {
+    if (!session.endedAt) continue; // Skip incomplete sessions
+    
+    const events = session.buenaObraEvents || [];
+    for (const event of events) {
+      if (event.buenaObraId === buenaObraId) {
+        // Track the most recent event time
+        if (!lastEventTime || event.timestamp > lastEventTime) {
+          lastEventTime = event.timestamp;
+        }
+        count += event.countIncrement;
+      }
+    }
+  }
+
+  // Check if reset cycle has elapsed (using same logic as sins)
+  if (lastEventTime && buenaObra.resetCycle && buenaObra.resetCycle !== 'no') {
+    const now = Date.now();
+    const elapsed = now - lastEventTime;
+    let shouldReset = false;
+    
+    switch (buenaObra.resetCycle) {
+      case 'diario':
+        const lastDate = new Date(lastEventTime).toDateString();
+        const nowDate = new Date(now).toDateString();
+        shouldReset = lastDate !== nowDate;
+        break;
+      case 'semanal':
+        shouldReset = elapsed >= 7 * 24 * 60 * 60 * 1000;
+        break;
+      case 'mensual':
+        shouldReset = elapsed >= 30 * 24 * 60 * 60 * 1000;
+        break;
+      case 'anual':
+        shouldReset = elapsed >= 365 * 24 * 60 * 60 * 1000;
+        break;
+    }
+    
+    if (shouldReset) {
+      return { count: 0, lastEventTime: null };
+    }
+  }
+
+  return { count, lastEventTime };
 }
 
 // ========== Analytics ==========
