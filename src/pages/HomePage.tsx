@@ -73,6 +73,15 @@ export function HomePage() {
     // Get only enabled buenas obras (not disabled)
     const allBuenasObras = getBuenasObras().filter(b => !b.isDisabled);
     
+    // Diagnostic logs for buenas obras filtering
+    console.log('[Exam] Total buenas obras habilitadas:', allBuenasObras.length);
+    console.log('[Exam] Buenas obras con involvedPersonTypes:', 
+      allBuenasObras.filter(b => b.involvedPersonTypes?.length > 0).length);
+    console.log('[Exam] Buenas obras con associatedActivities:', 
+      allBuenasObras.filter(b => b.associatedActivities?.length > 0).length);
+    console.log('[Exam] selectedPersonTypes:', personTypes);
+    console.log('[Exam] selectedActivities:', activities);
+    
     const hasPersonTypes = personTypes.length > 0;
     const hasActivities = activities.length > 0;
     
@@ -94,11 +103,12 @@ export function HomePage() {
       
       // Filter buenas obras with same OR logic
       const filteredBuenasObras = allBuenasObras.filter(obra => {
-        const matchesPersonType = hasPersonTypes && personTypes.some(pt => obra.involvedPersonTypes.includes(pt));
-        const matchesActivity = hasActivities && activities.some(act => obra.associatedActivities.includes(act));
+        const matchesPersonType = hasPersonTypes && personTypes.some(pt => obra.involvedPersonTypes?.includes(pt));
+        const matchesActivity = hasActivities && activities.some(act => obra.associatedActivities?.includes(act));
         return matchesPersonType || matchesActivity;
       });
       buenasObrasToShow = filteredBuenasObras.map(b => b.id);
+      console.log('[Exam] Buenas obras filtradas:', buenasObrasToShow.length, buenasObrasToShow);
     }
     
     setExamContext({

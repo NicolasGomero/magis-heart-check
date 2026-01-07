@@ -190,6 +190,8 @@ export function ExaminationFlow({
   // Filter and deduplicate buenas obras - each appears only in its highest priority term
   const buenasObrasByTerm = useMemo(() => {
     const obrasToDisplay = allBuenasObras.filter(b => buenasObrasToShow.includes(b.id));
+    console.log('[ExamFlow] Buenas obras to display:', obrasToDisplay.length, obrasToDisplay.map(o => ({ id: o.id, name: o.name, terms: o.terms })));
+    
     const grouped: Record<BuenaObraTerm, BuenaObra[]> = {
       'hacia_dios': [],
       'hacia_projimo': [],
@@ -201,12 +203,28 @@ export function ExaminationFlow({
     BUENA_OBRA_TERM_PRIORITY.forEach(term => {
       obrasToDisplay.forEach(obra => {
         if (assignedObraIds.has(obra.id)) return;
-        if (obra.terms.includes(term)) {
+        if (obra.terms?.includes(term)) {
           grouped[term].push(obra);
           assignedObraIds.add(obra.id);
         }
       });
     });
+    
+    // Fallback: obras without any assigned term go to 'hacia_si_mismo'
+    obrasToDisplay.forEach(obra => {
+      if (!assignedObraIds.has(obra.id)) {
+        console.log('[ExamFlow] Obra sin término asignado, usando fallback:', obra.name);
+        grouped['hacia_si_mismo'].push(obra);
+        assignedObraIds.add(obra.id);
+      }
+    });
+    
+    console.log('[ExamFlow] Grouped buenas obras:', {
+      hacia_dios: grouped['hacia_dios'].length,
+      hacia_projimo: grouped['hacia_projimo'].length,
+      hacia_si_mismo: grouped['hacia_si_mismo'].length
+    });
+    
     return grouped;
   }, [allBuenasObras, buenasObrasToShow]);
 
