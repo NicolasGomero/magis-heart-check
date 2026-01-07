@@ -182,20 +182,24 @@ export function SinCard({
               <MoreVertical className="w-4 h-4" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-popover">
+          <DropdownMenuContent align="end" className="w-48 bg-popover z-50">
             <DropdownMenuItem 
-              onClick={onDiscount}
+              onSelect={(e) => {
+                e.preventDefault();
+                console.log('[SinCard] DISCOUNT_CLICK sinId:', sin.id);
+                onDiscount();
+              }}
               disabled={count === 0}
-              className={count === 0 ? "opacity-50" : ""}
+              className={count === 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
             >
               <Minus className="w-4 h-4 mr-2" />
               Descontar
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onEdit}>
+            <DropdownMenuItem onSelect={onEdit}>
               <Pencil className="w-4 h-4 mr-2" />
               Editar pecado
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate(`/notas/${sin.id}?type=sin&return=/examen`)}>
+            <DropdownMenuItem onSelect={() => navigate(`/notas/${sin.id}?type=sin&return=/examen`)}>
               <StickyNote className="w-4 h-4 mr-2" />
               Notas
             </DropdownMenuItem>

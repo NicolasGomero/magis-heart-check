@@ -291,51 +291,73 @@ export function ExaminationFlow({
 
   // Handle discount (remove last event for this sin - prioritize current session, then historical)
   const handleDiscount = useCallback((sinId: string) => {
+    console.log('[ExamFlow] handleDiscount called for sinId:', sinId, 'sessionId:', sessionId);
+    
     // Get current session events directly (fresh from storage)
-    const events = getCurrentEvents();
+    const session = getExamSession(sessionId);
+    if (!session) {
+      console.error('[ExamFlow] Session not found in storage:', sessionId);
+      toast.error("No se pudo descontar: sesión no encontrada");
+      return;
+    }
+    
+    const events = session.events;
     const sinEvents = events.filter(e => e.sinId === sinId);
+    console.log('[ExamFlow] Current session events for this sin:', sinEvents.length, sinEvents.map(e => e.id));
 
     // First, try to discount from current session if there are events
     if (sinEvents.length > 0) {
       const lastEvent = sinEvents[sinEvents.length - 1];
+      console.log('[ExamFlow] Attempting to remove event:', lastEvent.id);
       
       // Verify event was removed successfully before updating counts
       const success = removeSinEvent(sessionId, lastEvent.id);
+      console.log('[ExamFlow] removeSinEvent result:', success);
       
       if (success) {
+        const newCount = Math.max(0, (sinCounts[sinId] || 0) - 1);
         setSinCounts(prev => ({
           ...prev,
-          [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
+          [sinId]: newCount
         }));
         setSessionCounts(prev => ({
           ...prev,
           [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
         }));
-        toast.success("Marca descontada de esta sesión");
+        console.log('[ExamFlow] Descontado 1. Nuevo total para', sinId, ':', newCount);
+        toast.success("Descontado 1");
       } else {
-        toast.error("No se pudo descontar la marca");
+        console.error('[ExamFlow] Failed to remove event from storage');
+        toast.error("No se pudo descontar: error al eliminar evento");
       }
       return;
     }
 
     // If no events in current session, try to discount from historical data
+    console.log('[ExamFlow] No events in current session, checking historical...');
     const totalCount = getEventCountForSin(sinId);
+    console.log('[ExamFlow] Historical count:', totalCount);
+    
     if (totalCount === 0) {
       toast.info("No hay registros para descontar");
       return;
     }
 
     const success = removeLastSinEventForSin(sinId);
+    console.log('[ExamFlow] removeLastSinEventForSin result:', success);
+    
     if (success) {
+      const newCount = Math.max(0, (sinCounts[sinId] || 0) - 1);
       setSinCounts(prev => ({
         ...prev,
-        [sinId]: Math.max(0, (prev[sinId] || 0) - 1)
+        [sinId]: newCount
       }));
+      console.log('[ExamFlow] Registro histórico descontado. Nuevo total:', newCount);
       toast.success("Registro histórico descontado");
     } else {
-      toast.error("No se pudo descontar el registro");
+      toast.error("No se pudo descontar: error al eliminar registro histórico");
     }
-  }, [sessionId, getCurrentEvents]);
+  }, [sessionId, sinCounts]);
 
   // Update attention for a sin
   const handleAttentionChange = useCallback((sinId: string, attention: 'deliberado' | 'semideliberado') => {
