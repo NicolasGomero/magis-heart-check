@@ -6,17 +6,21 @@ import { AddFreeformSinSheet } from "./examination/AddFreeformSinSheet";
 import { ResponsibilitySheet } from "./examination/ResponsibilitySheet";
 import { createExamSession, addSinEvent, updateSinEvent, removeSinEvent, completeExamSession, addFreeformSin, getExamSession, getExamSessions, removeLastSinEventForSin, getEventCountForSin } from "@/lib/examSessions";
 import { getSins, createSin } from "@/lib/sins.storage";
+import { getBuenasObras } from "@/lib/buenasObras.storage";
 import { getPreferences } from "@/lib/preferences";
 import { calculateCondicionantesFactor } from "@/lib/condicionantes";
-import { Check, Plus } from "lucide-react";
+import { Check, Plus, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Sin, Term, ResetCycle } from "@/lib/sins.types";
+import type { BuenaObra, BuenaObraTerm } from "@/lib/buenasObras.types";
 import type { SinEvent } from "@/lib/types";
 import { toast } from "sonner";
+
 interface ExaminationFlowProps {
   personTypes: string[];
   activities: string[];
   sinsToShow: string[];
+  buenasObrasToShow: string[];
   onBack: () => void;
   onComplete: () => void;
 }
@@ -38,6 +42,26 @@ const TERM_LABELS: Record<Term, {
   'contra_si_mismo': {
     icon: '🪞',
     label: 'Contra uno mismo'
+  }
+};
+
+// Priority order for buena obra terms
+const BUENA_OBRA_TERM_PRIORITY: BuenaObraTerm[] = ['hacia_dios', 'hacia_projimo', 'hacia_si_mismo'];
+const BUENA_OBRA_TERM_LABELS: Record<BuenaObraTerm, {
+  icon: string;
+  label: string;
+}> = {
+  'hacia_dios': {
+    icon: '✨',
+    label: 'Hacia Dios'
+  },
+  'hacia_projimo': {
+    icon: '🤝',
+    label: 'Hacia el Prójimo'
+  },
+  'hacia_si_mismo': {
+    icon: '🌱',
+    label: 'Hacia uno mismo'
   }
 };
 
@@ -131,11 +155,13 @@ export function ExaminationFlow({
   personTypes,
   activities,
   sinsToShow,
+  buenasObrasToShow,
   onBack,
   onComplete
 }: ExaminationFlowProps) {
   const navigate = useNavigate();
   const [allSins, setAllSins] = useState(() => getSins());
+  const [allBuenasObras] = useState(() => getBuenasObras());
 
   // Filter and deduplicate sins - each sin appears only in its highest priority term
   const sinsByTerm = useMemo(() => {
@@ -160,6 +186,29 @@ export function ExaminationFlow({
     });
     return grouped;
   }, [allSins, sinsToShow]);
+
+  // Filter and deduplicate buenas obras - each appears only in its highest priority term
+  const buenasObrasByTerm = useMemo(() => {
+    const obrasToDisplay = allBuenasObras.filter(b => buenasObrasToShow.includes(b.id));
+    const grouped: Record<BuenaObraTerm, BuenaObra[]> = {
+      'hacia_dios': [],
+      'hacia_projimo': [],
+      'hacia_si_mismo': []
+    };
+    const assignedObraIds = new Set<string>();
+
+    // Process terms in priority order
+    BUENA_OBRA_TERM_PRIORITY.forEach(term => {
+      obrasToDisplay.forEach(obra => {
+        if (assignedObraIds.has(obra.id)) return;
+        if (obra.terms.includes(term)) {
+          grouped[term].push(obra);
+          assignedObraIds.add(obra.id);
+        }
+      });
+    });
+    return grouped;
+  }, [allBuenasObras, buenasObrasToShow]);
 
   // Session management
   const [sessionId] = useState<string>(() => {
@@ -446,6 +495,9 @@ export function ExaminationFlow({
   if (activities.length > 0) contextParts.push(`${activities.length} actividades`);
   const subtitle = contextParts.length > 0 ? contextParts.join(', ') : 'Examen completo';
   const hasSins = Object.values(sinsByTerm).some(arr => arr.length > 0);
+  const hasBuenasObras = Object.values(buenasObrasByTerm).some(arr => arr.length > 0);
+  const hasItems = hasSins || hasBuenasObras;
+  
   return <div className="min-h-screen bg-background flex flex-col">
       <IOSHeader title="Examen" subtitle={subtitle} onBack={onBack} />
       
@@ -454,18 +506,20 @@ export function ExaminationFlow({
           Toca para marcar • Mantén presionado para opciones • Borde izquierdo para descripción
         </p>
         
-        {!hasSins ? <div className="text-center py-8">
+        {!hasItems ? <div className="text-center py-8">
             <p className="text-ios-body text-muted-foreground">
-              No hay pecados configurados para este contexto
+              No hay pecados ni buenas obras configurados para este contexto
             </p>
             <p className="text-ios-caption text-muted-foreground/60 mt-2">
-              Añade pecados desde el catálogo o usa el botón "+"
+              Añade ítems desde el catálogo o usa el botón "+"
             </p>
-          </div> : TERM_PRIORITY.map(term => {
-        const termSins = sinsByTerm[term];
-        if (termSins.length === 0) return null;
-        const termInfo = TERM_LABELS[term];
-        return <div key={term} className="space-y-2">
+          </div> : <>
+            {/* Pecados section */}
+            {hasSins && TERM_PRIORITY.map(term => {
+              const termSins = sinsByTerm[term];
+              if (termSins.length === 0) return null;
+              const termInfo = TERM_LABELS[term];
+              return <div key={term} className="space-y-2">
                 <div className="flex items-center gap-2 px-1">
                   <span className="text-lg">{termInfo.icon}</span>
                   <h3 className="text-ios-subhead text-muted-foreground uppercase tracking-wide">
@@ -475,13 +529,58 @@ export function ExaminationFlow({
                 
                 <div className="space-y-2">
                   {termSins.map((sin, index) => <div key={sin.id} className="animate-fade-in" style={{
-              animationDelay: `${index * 30}ms`
-            }}>
-                      <SinCard sin={sin} count={sinCounts[sin.id] || 0} attention={getSinState(sin.id).attention} motive={getSinState(sin.id).motive} onTap={() => handleTap(sin.id)} onDiscount={() => handleDiscount(sin.id)} onAttentionChange={att => handleAttentionChange(sin.id, att)} onMotiveChange={mot => handleMotiveChange(sin.id, mot)} onEdit={() => handleEdit(sin.id)} />
-                    </div>)}
+                    animationDelay: `${index * 30}ms`
+                  }}>
+                    <SinCard sin={sin} count={sinCounts[sin.id] || 0} attention={getSinState(sin.id).attention} motive={getSinState(sin.id).motive} onTap={() => handleTap(sin.id)} onDiscount={() => handleDiscount(sin.id)} onAttentionChange={att => handleAttentionChange(sin.id, att)} onMotiveChange={mot => handleMotiveChange(sin.id, mot)} onEdit={() => handleEdit(sin.id)} />
+                  </div>)}
                 </div>
               </div>;
-      })}
+            })}
+            
+            {/* Buenas Obras section */}
+            {hasBuenasObras && <>
+              {hasSins && <div className="border-t border-border pt-4 mt-4">
+                <div className="flex items-center gap-2 px-1 mb-4">
+                  <Heart className="w-5 h-5 text-green-500" />
+                  <h2 className="text-ios-headline font-semibold text-foreground">Buenas Obras</h2>
+                </div>
+              </div>}
+              
+              {BUENA_OBRA_TERM_PRIORITY.map(term => {
+                const termObras = buenasObrasByTerm[term];
+                if (termObras.length === 0) return null;
+                const termInfo = BUENA_OBRA_TERM_LABELS[term];
+                return <div key={term} className="space-y-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="text-lg">{termInfo.icon}</span>
+                    <h3 className="text-ios-subhead text-muted-foreground uppercase tracking-wide">
+                      {termInfo.label}
+                    </h3>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {termObras.map((obra, index) => <div key={obra.id} className="animate-fade-in" style={{
+                      animationDelay: `${index * 30}ms`
+                    }}>
+                      {/* Simple card for buenas obras - can be enhanced later */}
+                      <div 
+                        className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 cursor-pointer active:scale-[0.98] transition-transform"
+                        onClick={() => navigate(`/obras/buenas/${obra.id}`)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-ios-body font-medium text-foreground">{obra.name}</span>
+                          <span className="text-ios-caption text-muted-foreground">Ver detalles</span>
+                        </div>
+                        {obra.shortDescription && (
+                          <p className="text-ios-caption text-muted-foreground mt-1">{obra.shortDescription}</p>
+                        )}
+                      </div>
+                    </div>)}
+                  </div>
+                </div>;
+              })}
+            </>}
+          </>}
       </div>
       
       {/* Bottom actions - increased bottom padding for safe area */}

@@ -5,12 +5,14 @@ import { ContextSelector } from "@/components/ContextSelector";
 import { ExaminationFlow } from "@/components/ExaminationFlow";
 import { getUserState, getMinutesSinceLastExam, formatTimeAgo, getExamState, type ExamState } from "@/lib/storage";
 import { getSins } from "@/lib/sins.storage";
+import { getBuenasObras } from "@/lib/buenasObras.storage";
 import { cn } from "@/lib/utils";
 type Screen = 'home' | 'examination';
 interface ExamContext {
   personTypes: string[];
   activities: string[];
   sinsToShow: string[];
+  buenasObrasToShow: string[];
 }
 function StateIndicator({
   state,
@@ -68,30 +70,42 @@ export function HomePage() {
   const handleGenerate = (personTypes: string[], activities: string[]) => {
     // Get only enabled sins (not disabled)
     const allSins = getSins().filter(s => !s.isDisabled);
+    // Get only enabled buenas obras (not disabled)
+    const allBuenasObras = getBuenasObras().filter(b => !b.isDisabled);
+    
     const hasPersonTypes = personTypes.length > 0;
     const hasActivities = activities.length > 0;
+    
     let sinsToShow: string[];
+    let buenasObrasToShow: string[];
+    
     if (!hasPersonTypes && !hasActivities) {
-      // No selection = show all enabled sins
+      // No selection = show all enabled items
       sinsToShow = allSins.map(s => s.id);
+      buenasObrasToShow = allBuenasObras.map(b => b.id);
     } else {
-      // Filter with strict AND logic
-      const filtered = allSins.filter(sin => {
-        // Must match selected person types (if any are selected)
-        const matchesPersonType = !hasPersonTypes || personTypes.some(pt => sin.involvedPersonTypes.includes(pt));
-
-        // Must match selected activities (if any are selected)
-        const matchesActivity = !hasActivities || activities.some(act => sin.associatedActivities.includes(act));
-
-        // BOTH conditions must be satisfied
-        return matchesPersonType && matchesActivity;
+      // Filter sins with OR logic (matchPerson OR matchActivity)
+      const filteredSins = allSins.filter(sin => {
+        const matchesPersonType = hasPersonTypes && personTypes.some(pt => sin.involvedPersonTypes.includes(pt));
+        const matchesActivity = hasActivities && activities.some(act => sin.associatedActivities.includes(act));
+        return matchesPersonType || matchesActivity;
       });
-      sinsToShow = filtered.map(s => s.id);
+      sinsToShow = filteredSins.map(s => s.id);
+      
+      // Filter buenas obras with same OR logic
+      const filteredBuenasObras = allBuenasObras.filter(obra => {
+        const matchesPersonType = hasPersonTypes && personTypes.some(pt => obra.involvedPersonTypes.includes(pt));
+        const matchesActivity = hasActivities && activities.some(act => obra.associatedActivities.includes(act));
+        return matchesPersonType || matchesActivity;
+      });
+      buenasObrasToShow = filteredBuenasObras.map(b => b.id);
     }
+    
     setExamContext({
       personTypes,
       activities,
-      sinsToShow
+      sinsToShow,
+      buenasObrasToShow
     });
     setScreen('examination');
   };
@@ -105,7 +119,7 @@ export function HomePage() {
     setUserState(getUserState()); // Refresh state
   };
   if (screen === 'examination' && examContext) {
-    return <ExaminationFlow personTypes={examContext.personTypes} activities={examContext.activities} sinsToShow={examContext.sinsToShow} onBack={handleBack} onComplete={handleComplete} />;
+    return <ExaminationFlow personTypes={examContext.personTypes} activities={examContext.activities} sinsToShow={examContext.sinsToShow} buenasObrasToShow={examContext.buenasObrasToShow} onBack={handleBack} onComplete={handleComplete} />;
   }
   return <div className="flex flex-col min-h-full pb-20">
       {/* Header */}
