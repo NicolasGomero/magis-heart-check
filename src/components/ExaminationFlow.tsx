@@ -2,9 +2,26 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { IOSHeader } from "./IOSHeader";
 import { SinCard } from "./examination/SinCard";
+import { BuenaObraCard } from "./examination/BuenaObraCard";
 import { AddFreeformSinSheet } from "./examination/AddFreeformSinSheet";
 import { ResponsibilitySheet } from "./examination/ResponsibilitySheet";
-import { createExamSession, addSinEvent, updateSinEvent, removeSinEvent, completeExamSession, addFreeformSin, getExamSession, getExamSessions, removeLastSinEventForSin, getEventCountForSin } from "@/lib/examSessions";
+import { 
+  createExamSession, 
+  addSinEvent, 
+  updateSinEvent, 
+  removeSinEvent, 
+  completeExamSession, 
+  addFreeformSin, 
+  getExamSession, 
+  getExamSessions, 
+  removeLastSinEventForSin, 
+  getEventCountForSin,
+  addBuenaObraEvent,
+  removeBuenaObraEvent,
+  removeLastBuenaObraEventForObra,
+  getEventCountForBuenaObra,
+  getPersistedCountForBuenaObra
+} from "@/lib/examSessions";
 import { getSins, createSin } from "@/lib/sins.storage";
 import { getBuenasObras } from "@/lib/buenasObras.storage";
 import { getPreferences } from "@/lib/preferences";
@@ -13,7 +30,7 @@ import { Check, Plus, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Sin, Term, ResetCycle } from "@/lib/sins.types";
 import type { BuenaObra, BuenaObraTerm } from "@/lib/buenasObras.types";
-import type { SinEvent } from "@/lib/types";
+import type { SinEvent, BuenaObraEvent } from "@/lib/types";
 import { toast } from "sonner";
 
 interface ExaminationFlowProps {
@@ -190,7 +207,6 @@ export function ExaminationFlow({
   // Filter and deduplicate buenas obras - each appears only in its highest priority term
   const buenasObrasByTerm = useMemo(() => {
     const obrasToDisplay = allBuenasObras.filter(b => buenasObrasToShow.includes(b.id));
-    console.log('[ExamFlow] Buenas obras to display:', obrasToDisplay.length, obrasToDisplay.map(o => ({ id: o.id, name: o.name, terms: o.terms })));
     
     const grouped: Record<BuenaObraTerm, BuenaObra[]> = {
       'hacia_dios': [],
@@ -213,16 +229,9 @@ export function ExaminationFlow({
     // Fallback: obras without any assigned term go to 'hacia_si_mismo'
     obrasToDisplay.forEach(obra => {
       if (!assignedObraIds.has(obra.id)) {
-        console.log('[ExamFlow] Obra sin término asignado, usando fallback:', obra.name);
         grouped['hacia_si_mismo'].push(obra);
         assignedObraIds.add(obra.id);
       }
-    });
-    
-    console.log('[ExamFlow] Grouped buenas obras:', {
-      hacia_dios: grouped['hacia_dios'].length,
-      hacia_projimo: grouped['hacia_projimo'].length,
-      hacia_si_mismo: grouped['hacia_si_mismo'].length
     });
     
     return grouped;
@@ -300,6 +309,62 @@ export function ExaminationFlow({
 
   // Track sin states (attention/motive settings)
   const [sinStates, setSinStates] = useState<Record<string, SinState>>({});
+
+  // ===== BUENAS OBRAS STATE =====
+  // Track counts for buenas obras - initialize with persisted counts
+  const [obraCounts, setObraCounts] = useState<Record<string, number>>(() => {
+    const initialCounts: Record<string, number> = {};
+    const obras = getBuenasObras();
+    for (const obraId of buenasObrasToShow) {
+      const obra = obras.find(o => o.id === obraId);
+      if (obra) {
+        const { count } = getPersistedCountForBuenaObra(obraId, obra);
+        if (count > 0) {
+          initialCounts[obraId] = count;
+        }
+      }
+    }
+    return initialCounts;
+  });
+
+  // Track session-specific counts for buenas obras
+  const [obraSessionCounts, setObraSessionCounts] = useState<Record<string, number>>({});
+
+  // Track purity of intention state for each obra
+  const [obraPurityStates, setObraPurityStates] = useState<Record<string, 'actual' | 'virtual' | 'habitual'>>({});
+
+  // Sync obraCounts when sessions are updated
+  useEffect(() => {
+    const handleSessionsUpdated = () => {
+      const obras = getBuenasObras();
+      const newCounts: Record<string, number> = {};
+      
+      for (const obraId of buenasObrasToShow) {
+        const obra = obras.find(o => o.id === obraId);
+        if (obra) {
+          const { count } = getPersistedCountForBuenaObra(obraId, obra);
+          if (count > 0) {
+            newCounts[obraId] = count;
+          }
+        }
+      }
+      
+      // Add back current session counts
+      const currentSession = getExamSession(sessionId);
+      if (currentSession) {
+        for (const event of (currentSession.buenaObraEvents || [])) {
+          newCounts[event.buenaObraId] = (newCounts[event.buenaObraId] || 0) + 1;
+        }
+      }
+      
+      setObraCounts(newCounts);
+    };
+
+    window.addEventListener('exam-sessions-updated', handleSessionsUpdated);
+    return () => {
+      window.removeEventListener('exam-sessions-updated', handleSessionsUpdated);
+    };
+  }, [buenasObrasToShow, sessionId]);
 
   // UI state
   const [isSaving, setIsSaving] = useState(false);
@@ -453,6 +518,115 @@ export function ExaminationFlow({
     navigate(`/sins/${sinId}`);
   }, [navigate]);
 
+  // ===== BUENAS OBRAS HANDLERS =====
+  
+  // Get purity state or default
+  const getObraPurity = useCallback((obraId: string): 'actual' | 'virtual' | 'habitual' => {
+    return obraPurityStates[obraId] || 'virtual';
+  }, [obraPurityStates]);
+
+  // Handle tap on buena obra card (register event)
+  const handleObraTap = useCallback((obraId: string) => {
+    const purity = getObraPurity(obraId);
+    const obra = allBuenasObras.find(o => o.id === obraId);
+
+    // Calculate condicionantes factor at event time
+    const prefs = getPreferences();
+    const condicionantesResult = obra && obra.condicionantes?.length > 0 
+      ? calculateCondicionantesFactor(prefs.subjectProfile.condicionantesActivos, obra.condicionantes, 'buenaObra') 
+      : { appliedCondicionantes: [], k: 0, factor: 1.0 };
+    
+    const event = addBuenaObraEvent(sessionId, obraId, {
+      purityOfIntention: purity,
+      appliedCondicionantes: condicionantesResult.appliedCondicionantes,
+      condicionantesK: condicionantesResult.k,
+      condicionantesFactor: condicionantesResult.factor
+    });
+    
+    if (event) {
+      setObraCounts(prev => ({
+        ...prev,
+        [obraId]: (prev[obraId] || 0) + 1
+      }));
+      setObraSessionCounts(prev => ({
+        ...prev,
+        [obraId]: (prev[obraId] || 0) + 1
+      }));
+    } else {
+      toast.error("No se pudo registrar el evento");
+    }
+  }, [sessionId, getObraPurity, allBuenasObras]);
+
+  // Handle discount for buena obra
+  const handleObraDiscount = useCallback((obraId: string) => {
+    // Get current session events directly (fresh from storage)
+    const session = getExamSession(sessionId);
+    if (!session) {
+      toast.error("No se pudo descontar: sesión no encontrada");
+      return;
+    }
+    
+    const events = session.buenaObraEvents || [];
+    const obraEvents = events.filter(e => e.buenaObraId === obraId);
+
+    // First, try to discount from current session if there are events
+    if (obraEvents.length > 0) {
+      const lastEvent = obraEvents[obraEvents.length - 1];
+      
+      const success = removeBuenaObraEvent(sessionId, lastEvent.id);
+      
+      if (success) {
+        const newCount = Math.max(0, (obraCounts[obraId] || 0) - 1);
+        setObraCounts(prev => ({
+          ...prev,
+          [obraId]: newCount
+        }));
+        setObraSessionCounts(prev => ({
+          ...prev,
+          [obraId]: Math.max(0, (prev[obraId] || 0) - 1)
+        }));
+        toast.success("Descontado 1");
+      } else {
+        toast.error("No se pudo descontar: error al eliminar evento");
+      }
+      return;
+    }
+
+    // If no events in current session, try to discount from historical data
+    const totalCount = getEventCountForBuenaObra(obraId);
+    
+    if (totalCount === 0) {
+      toast.info("No hay registros para descontar");
+      return;
+    }
+
+    const success = removeLastBuenaObraEventForObra(obraId);
+    
+    if (success) {
+      const newCount = Math.max(0, (obraCounts[obraId] || 0) - 1);
+      setObraCounts(prev => ({
+        ...prev,
+        [obraId]: newCount
+      }));
+      toast.success("Registro histórico descontado");
+    } else {
+      toast.error("No se pudo descontar: error al eliminar registro histórico");
+    }
+  }, [sessionId, obraCounts]);
+
+  // Update purity for a buena obra
+  const handleObraPurityChange = useCallback((obraId: string, purity: 'actual' | 'virtual' | 'habitual') => {
+    setObraPurityStates(prev => ({
+      ...prev,
+      [obraId]: purity
+    }));
+  }, []);
+
+  // Handle edit navigation for buena obra
+  const handleObraEdit = useCallback((obraId: string) => {
+    navigate(`/obras/buenas/${obraId}/edit`);
+  }, [navigate]);
+
   // Handle freeform sin addition
   const handleAddFreeform = useCallback((text: string, term: Term, addToCatalog: boolean) => {
     // Add to session's freeform list
@@ -580,19 +754,15 @@ export function ExaminationFlow({
                     {termObras.map((obra, index) => <div key={obra.id} className="animate-fade-in" style={{
                       animationDelay: `${index * 30}ms`
                     }}>
-                      {/* Simple card for buenas obras - can be enhanced later */}
-                      <div 
-                        className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 cursor-pointer active:scale-[0.98] transition-transform"
-                        onClick={() => navigate(`/obras/buenas/${obra.id}`)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-ios-body font-medium text-foreground">{obra.name}</span>
-                          <span className="text-ios-caption text-muted-foreground">Ver detalles</span>
-                        </div>
-                        {obra.shortDescription && (
-                          <p className="text-ios-caption text-muted-foreground mt-1">{obra.shortDescription}</p>
-                        )}
-                      </div>
+                      <BuenaObraCard 
+                        buenaObra={obra} 
+                        count={obraCounts[obra.id] || 0} 
+                        purity={getObraPurity(obra.id)} 
+                        onTap={() => handleObraTap(obra.id)} 
+                        onDiscount={() => handleObraDiscount(obra.id)} 
+                        onPurityChange={obra.showPurityInExam ? (p) => handleObraPurityChange(obra.id, p) : undefined} 
+                        onEdit={() => handleObraEdit(obra.id)} 
+                      />
                     </div>)}
                   </div>
                 </div>;
