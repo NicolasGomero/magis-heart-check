@@ -71,3 +71,16 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Publicar como web (sin instalar nada localmente)
+
+Puedes publicarla gratis con **GitHub Pages** sin ejecutar nada en tu computadora:
+
+1. Sube este repositorio a GitHub.
+2. En GitHub ve a **Settings → Pages**.
+3. En **Source**, elige **GitHub Actions**.
+4. Haz un push a la rama `work`, `main` o `master`.
+5. Espera a que termine el workflow **Deploy to GitHub Pages** en la pestaña **Actions**.
+6. GitHub te mostrará la URL pública (algo como `https://TU_USUARIO.github.io/TU_REPO/`).
+
+Este repo ya incluye el workflow automático en `.github/workflows/deploy-pages.yml`.

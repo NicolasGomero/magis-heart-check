@@ -21,6 +21,7 @@ import MediosEspiritualesPage from "@/pages/MediosEspiritualesPage";
 import NotasPage from "@/pages/NotasPage";
 import ChartDetailPage from "@/pages/ChartDetailPage";
 import NotFound from "./pages/NotFound";
+import FlashcardsPage from "@/pages/FlashcardsPage";
 
 const queryClient = new QueryClient();
 
@@ -29,12 +30,14 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
           {/* Redirect root to examen */}
-          <Route path="/" element={<Navigate to="/examen" replace />} />
+          <Route path="/" element={<Navigate to="/flashcards" replace />} />
           
           {/* Main layout with bottom nav */}
+          <Route path="/flashcards" element={<FlashcardsPage />} />
+
           <Route element={<MainLayout />}>
             <Route path="/examen" element={<HomePage />} />
             <Route path="/obras" element={<ObrasPage />} />
